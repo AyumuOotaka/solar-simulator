@@ -66,6 +66,38 @@
                 `;
             }
 
+            function calculateElectricityCost(annualUsage) {
+                const basicFee50A = 1558.75 * 12;
+                const basicFee60A = 1870.50 * 12;
+
+                const tier1Limit = 120;
+                const tier2Limit = 300;
+
+                const tier1Rate = 29.3;
+                const tier2Rate = 36.4;
+                const tier3Rate = 40.49;
+                const discountPerKwh = 3.0;
+
+                let monthlyUsage = annualUsage / 12;
+                let monthlyCost = 0;
+
+                if (monthlyUsage <= tier1Limit) {
+                    monthlyCost = monthlyUsage * tier1Rate;
+                } else if (monthlyUsage <= tier2Limit) {
+                    monthlyCost = (tier1Limit * tier1Rate) + ((monthlyUsage - tier1Limit) * tier2Rate);
+                } else {
+                    monthlyCost = (tier1Limit * tier1Rate) + ((tier2Limit - tier1Limit) * tier2Rate) + ((monthlyUsage - tier2Limit) * tier3Rate);
+                }
+
+                monthlyCost -= monthlyUsage * discountPerKwh;
+
+                let annualEnergyCost = monthlyCost * 12;
+                let contractA = annualUsage < 4200 ? 50 : 60;
+                let basicFee = contractA === 50 ? basicFee50A : basicFee60A;
+
+                return Math.round(basicFee + annualEnergyCost);
+            }
+
             function calculateSolarImpact(annualUsage, panelOutput, daytimeDays) {
                 let baseDaytimeUsageRatio = 0.315;
                 let adjustmentMap = {
@@ -89,11 +121,15 @@
                 let annualSolarSell = annualSolarGeneration - annualSolarUsage;
                 let annualSellIncome = annualSolarSell * 8.5;
 
-                let savings = 0; 
+                let newAnnualUsage = annualUsage - annualSolarUsage;
+
+                let noSolarAnnualCost = calculateElectricityCost(annualUsage);
+                let solarAnnualCost = calculateElectricityCost(newAnnualUsage);
+                let savings = noSolarAnnualCost - solarAnnualCost;
 
                 return {
-                    noSolarAnnualCost: 0,
-                    solarAnnualCost: 0,
+                    noSolarAnnualCost: noSolarAnnualCost,
+                    solarAnnualCost: solarAnnualCost,
                     savings: savings,
                     annualSolarUsage: Math.round(annualSolarUsage),
                     daytimeUsageRatio: daytimeUsageRatio,
