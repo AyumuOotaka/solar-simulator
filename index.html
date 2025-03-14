@@ -8,8 +8,13 @@
 <body>
     <h2>太陽光発電シミュレーター</h2>
 
-    <label for="annualUsage">年間電気使用量 (kWh): </label>
-    <input type="number" id="annualUsage" min="0" value="4320">
+    <label for="monthlyUsageMax">月最高使用電気量 (kWh): </label>
+    <input type="number" id="monthlyUsageMax" min="0" value="500">
+
+    <br><br>
+
+    <label for="monthlyUsageMin">月最低使用電気量 (kWh): </label>
+    <input type="number" id="monthlyUsageMin" min="0" value="300">
 
     <br><br>
 
@@ -38,13 +43,18 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             function calculate() {
-                let annualUsage = parseFloat(document.getElementById("annualUsage").value) || 0;
+                let monthlyUsageMax = parseFloat(document.getElementById("monthlyUsageMax").value) || 0;
+                let monthlyUsageMin = parseFloat(document.getElementById("monthlyUsageMin").value) || 0;
                 let panelOutput = parseFloat(document.getElementById("panelOutput").value) || 0;
                 let daytimeDays = document.getElementById("daytimeDays").value;
+
+                // 年間電気使用量の計算（月最高 + 月最低の平均 × 12）
+                let annualUsage = ((monthlyUsageMax + monthlyUsageMin) / 2) * 12;
 
                 let result = calculateSolarImpact(annualUsage, panelOutput, daytimeDays);
 
                 document.getElementById("result").innerHTML = `
+                    <p>年間電気使用量 (計算値): <strong>${annualUsage.toLocaleString()} kWh</strong></p>
                     <p>太陽光なしの年間電気料金: <strong>${result.noSolarAnnualCost.toLocaleString()} 円</strong></p>
                     <p>太陽光ありの年間電気料金: <strong>${result.solarAnnualCost.toLocaleString()} 円</strong></p>
                     <p>節電金額: <strong>${result.savings.toLocaleString()} 円</strong></p>
@@ -93,7 +103,8 @@
                 };
             }
 
-            document.getElementById("annualUsage").addEventListener("input", calculate);
+            document.getElementById("monthlyUsageMax").addEventListener("input", calculate);
+            document.getElementById("monthlyUsageMin").addEventListener("input", calculate);
             document.getElementById("panelOutput").addEventListener("input", calculate);
             document.getElementById("daytimeDays").addEventListener("change", calculate);
 
