@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太陽光発電シミュレーター</title>
+</head>
+<body>
+    <h2>太陽光発電シミュレーター</h2>
+
+    <label for="annualUsage">年間電気使用量 (kWh): </label>
+    <input type="number" id="annualUsage" min="0" value="4320">
+
+    <br><br>
+
+    <label for="panelOutput">太陽光パネルの額面出力 (kW): </label>
+    <input type="number" id="panelOutput" min="0" step="0.1" value="2.0">
+
+    <br><br>
+
+    <label for="daytimeDays">1週間のうち日中の在宅日数 (0〜7): </label>
+    <select id="daytimeDays">
+        <option value="">未選択</option>
+        <option value="0">0日</option>
+        <option value="1">1日</option>
+        <option value="2">2日</option>
+        <option value="3">3日</option>
+        <option value="4">4日</option>
+        <option value="5">5日</option>
+        <option value="6">6日</option>
+        <option value="7">7日</option>
+    </select>
+
+    <br><br>
+
+    <div id="result"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function calculate() {
+                let annualUsage = parseFloat(document.getElementById("annualUsage").value) || 0;
+                let panelOutput = parseFloat(document.getElementById("panelOutput").value) || 0;
+                let daytimeDays = document.getElementById("daytimeDays").value;
+
+                let result = calculateSolarImpact(annualUsage, panelOutput, daytimeDays);
+
+                document.getElementById("result").innerHTML = `
+                    <p>太陽光なしの年間電気料金: <strong>${result.noSolarAnnualCost.toLocaleString()} 円</strong></p>
+                    <p>太陽光ありの年間電気料金: <strong>${result.solarAnnualCost.toLocaleString()} 円</strong></p>
+                    <p>節電金額: <strong>${result.savings.toLocaleString()} 円</strong></p>
+                    <p>年間太陽光の電気使用量: <strong>${result.annualSolarUsage.toLocaleString()} kWh</strong></p>
+                    <p>日中電気使用率 (補正後): <strong>${(result.daytimeUsageRatio * 100).toFixed(2)} %</strong></p>
+                    <p>日間発電出力: <strong>${result.dailySolarOutput.toFixed(2)} kWh/日</strong></p>
+                    <p>年間売電量: <strong>${result.annualSolarSell.toLocaleString()} kWh</strong></p>
+                    <p>年間売電金額: <strong>${result.annualSellIncome.toLocaleString()} 円</strong></p>
+                `;
+            }
+
+            function calculateSolarImpact(annualUsage, panelOutput, daytimeDays) {
+                let baseDaytimeUsageRatio = 0.315;
+                let adjustmentMap = {
+                    "0": -0.022,
+                    "1": -0.011,
+                    "2": 0.00,
+                    "3": 0.011,
+                    "4": 0.022,
+                    "5": 0.033,
+                    "6": 0.044,
+                    "7": 0.055
+                };
+
+                let adjustment = adjustmentMap[daytimeDays] || 0.00;
+                let daytimeUsageRatio = baseDaytimeUsageRatio + adjustment;
+
+                let daytimeUsage = (annualUsage / 365) * daytimeUsageRatio;
+                let dailySolarOutput = panelOutput * 3.15;
+                let annualSolarGeneration = dailySolarOutput * 365;
+                let annualSolarUsage = Math.min(annualSolarGeneration, daytimeUsage * 365);
+                let annualSolarSell = annualSolarGeneration - annualSolarUsage;
+                let annualSellIncome = annualSolarSell * 8.5;
+
+                let savings = 0; 
+
+                return {
+                    noSolarAnnualCost: 0,
+                    solarAnnualCost: 0,
+                    savings: savings,
+                    annualSolarUsage: Math.round(annualSolarUsage),
+                    daytimeUsageRatio: daytimeUsageRatio,
+                    dailySolarOutput: dailySolarOutput,
+                    annualSolarSell: Math.round(annualSolarSell),
+                    annualSellIncome: Math.round(annualSellIncome)
+                };
+            }
+
+            document.getElementById("annualUsage").addEventListener("input", calculate);
+            document.getElementById("panelOutput").addEventListener("input", calculate);
+            document.getElementById("daytimeDays").addEventListener("change", calculate);
+
+            calculate();
+        });
+    </script>
+</body>
+</html>
