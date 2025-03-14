@@ -1,0 +1,99 @@
+/* 全体のフォントと背景 */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #F5F5DC; /* ベージュ */
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* コンテナのレイアウト（左：入力 / 右：結果） */
+.container {
+    display: flex;
+    max-width: 900px;
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* 左側の入力エリア */
+.input-area {
+    flex: 1;
+    padding: 20px;
+    background: #E3F2FD; /* 空色 */
+}
+
+/* 右側の結果エリア */
+.result-area {
+    flex: 1;
+    padding: 20px;
+    background: #FFF3E0; /* 薄いオレンジ */
+}
+
+/* ラベルと入力欄の調整 */
+label {
+    font-weight: bold;
+    display: block;
+    margin: 10px 0 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* ボタンデザイン（立体感を演出） */
+button {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #87CEEB; /* 空色 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* ボタンのホバー時 */
+button:hover {
+    background: #64B5F6; /* 少し濃い空色 */
+    transform: translateY(-2px);
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ボタンのクリック時 */
+button:active {
+    background: #42A5F5;
+    transform: translateY(1px);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 結果表示エリア */
+.result-area p {
+    font-size: 16px;
+    margin: 8px 0;
+    color: #333;
+}
+
+/* スマホ対応（横並びを縦並びに変更） */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .input-area, .result-area {
+        flex: none;
+        width: 100%;
+    }
+}
