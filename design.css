@@ -7,12 +7,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
 }
 
-/* メインコンテナ：中央配置、横幅制限 */
+/* メインコンテナ：タイトル・入力欄・結果エリア */
 .container {
-    display: flex;
-    flex-direction: row;
     max-width: 900px;
     width: 100%;
     background: white;
@@ -20,35 +19,38 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     padding: 20px;
-    gap: 20px;
-}
-
-/* 左側の入力エリア */
-.input-area {
-    flex: 1;
-    padding: 20px;
-    background: #E3F2FD; /* 空色 */
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-/* 右側の結果エリア */
-.result-area {
-    flex: 1;
-    padding: 20px;
-    background: #FFF3E0; /* 薄いオレンジ */
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
 }
 
 /* タイトル */
 h2 {
-    font-size: 22px;
+    font-size: 24px;
     text-align: center;
     color: #333;
+    margin-bottom: 20px;
+}
+
+/* 入力エリア（上部・2列レイアウト） */
+.input-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* 入力欄（2列に配置） */
+.input-area {
+    flex: 1;
+    padding: 15px;
+    background: #E3F2FD; /* 空色 */
+    border-radius: 10px;
+}
+
+/* 結果エリア（下部・全幅表示） */
+.result-area {
     width: 100%;
+    margin-top: 20px;
+    padding: 20px;
+    background: #FFF3E0; /* 薄いオレンジ */
+    border-radius: 10px;
 }
 
 /* ラベルと入力欄 */
@@ -106,9 +108,8 @@ button:active {
 
 /* スマホ対応（横並びを縦並びに変更） */
 @media (max-width: 768px) {
-    .container {
+    .input-container {
         flex-direction: column;
-        max-width: 90%;
     }
 
     .input-area, .result-area {
