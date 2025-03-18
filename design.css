@@ -1,59 +1,74 @@
-/* 全体のスタイル設定 /
 body {
-font-family: 'Arial', sans-serif;
-background-color: #f5f5f5; / 明るい背景色 */
-margin: 0;
-padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #F5F5DC; /* ベージュ */
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-/* タイトルのスタイル /
-h2 {
-text-align: center;
-color: #333; / タイトルの色 */
-margin-bottom: 20px;
-font-size: 28px;
+
+h2, h3 {
+  text-align: center;
+  margin-bottom: 20px;
 }
-/* ラベルのスタイル /
-label {
-font-size: 18px;
-margin: 10px 0;
-display: block; / ラベルをブロック要素に */
+
+/* 入力フォーム全体 */
+.input-container {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
 }
-/* 入力フィールドのスタイル /
-input[type="number"],
-select {
-width: 100%; / 全幅 /
-padding: 10px;
-margin: 5px 0 20px; / 上下にマージンを追加 /
-border: 1px solid #ccc; / ボーダー /
-border-radius: 5px; / 角を丸める */
-font-size: 16px;
+
+/* 各行を2列レイアウトに */
+.input-row {
+  display: flex;
+  gap: 20px;
+  width: 100%;
 }
-/* 結果表示のスタイル /
+
+.input-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+/* 結果表示エリア */
 #result {
-background-color: #ffffff; / 結果表示の背景 /
-border-radius: 10px;
-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); / 影を付ける */
-padding: 20px;
-margin-top: 20px;
+  width: 100%;
+  max-width: 900px;
+  background: #FFF3E0; /* 薄いオレンジ */
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
-/* 結果のテキストのスタイル /
-#result p {
-font-size: 16px; / フォントサイズ調整 /
-margin: 5px 0; / 上下にマージンを追加 /
-color: #555; / テキストの色 */
+
+/* 経済効果グラフ */
+canvas {
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 20px;
 }
-/* モバイルデバイス用のレスポンシブスタイル /
-@media (max-width: 600px) {
-h2 {
-font-size: 24px; / タイトルのフォントサイズ調整 */
+
+/* 設備導入費用入力エリア（グラフ下部） */
+.equipment-input {
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 20px;
+  text-align: center;
 }
-label {
-font-size: 16px; /* ラベルのフォントサイズ調整 */
-}
-input[type="number"],
-select {
-font-size: 14px; /* 入力フィールドのフォントサイズ調整 */
-}
-#result p {
-font-size: 14px; /* 結果のフォントサイズ調整 */
+.equipment-input input {
+  width: 200px;
 }
