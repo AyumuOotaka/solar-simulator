@@ -1,152 +1,82 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>太陽光発電シミュレーター</title>
-    <link rel="stylesheet" href="design.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>太陽光発電シミュレーター (プラン1)</title>
+  <link rel="stylesheet" href="design.css">
+  <!-- Chart.js v3 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js Annotation Plugin v1.1.0 -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
 </head>
 <body>
-    <h2>太陽光発電シミュレーター</h2>
+  <h2>太陽光発電シミュレーター (プラン1)</h2>
 
-    <label for="monthlyUsageMax">月最高使用電気量 (kWh): </label>
-    <input type="number" id="monthlyUsageMax" min="0" value="500">
+  <!-- 入力フォーム：2列レイアウト -->
+  <div class="input-container">
+    <div class="input-row">
+      <div class="input-item">
+        <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
+        <input type="number" id="monthlyUsageMax" min="0" value="650">
+      </div>
+      <div class="input-item">
+        <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
+        <input type="number" id="monthlyUsageMin" min="0" value="400">
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-item">
+        <label for="panelOutput">太陽光パネルの額面出力 (kW):</label>
+        <input type="number" id="panelOutput" min="0" step="0.1" value="5.0">
+      </div>
+      <div class="input-item">
+        <label for="daytimeDays">日中在宅日数 (0〜7):</label>
+        <select id="daytimeDays">
+          <option value="0">0日</option>
+          <option value="1">1日</option>
+          <option value="2" selected>2日</option>
+          <option value="3">3日</option>
+          <option value="4">4日</option>
+          <option value="5">5日</option>
+          <option value="6">6日</option>
+          <option value="7">7日</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-item">
+        <label for="battery">蓄電池の選択:</label>
+        <select id="battery">
+          <option value="">蓄電池なし</option>
+          <option value="5.12">OFF GRID WORLD OG-BAT512 (5.12kWh)</option>
+          <option value="10.24">OFF GRID WORLD OG-BAT1024 (10.24kWh)</option>
+          <option value="15.36">OFF GRID WORLD OG-BAT1536 (15.36kWh)</option>
+          <option value="3.3">住友電気工業 PDS-1600S03E (3.3kWh)</option>
+          <option value="12.8">住友電気工業 PDH-6000s01 (12.8kWh)</option>
+          <option value="other">その他（自分で入力）</option>
+        </select>
+      </div>
+      <div class="input-item" id="batteryOtherContainer" style="display: none;">
+        <label for="batteryOther">蓄電池容量 (kWh):</label>
+        <input type="number" id="batteryOther" min="0" step="0.1" placeholder="例: 8.0">
+      </div>
+    </div>
+  </div>
 
-    <br><br>
+  <!-- 結果表示エリア -->
+  <div id="result"></div>
 
-    <label for="monthlyUsageMin">月最低使用電気量 (kWh): </label>
-    <input type="number" id="monthlyUsageMin" min="0" value="300">
+  <!-- 経済効果グラフ -->
+  <h3>経済効果（節電金額＋売電金額 の累積 vs 設備導入費用）</h3>
+  <canvas id="economicEffectChart"></canvas>
 
-    <br><br>
+  <!-- 設備導入費用入力欄（グラフの下に配置） -->
+  <div class="equipment-input">
+    <label for="equipmentCost">設備導入費用 (円):</label>
+    <input type="number" id="equipmentCost" min="0" value="300000">
+  </div>
 
-    <label for="panelOutput">太陽光パネルの額面出力 (kW): </label>
-    <input type="number" id="panelOutput" min="0" step="0.1" value="2.0">
-
-    <br><br>
-
-    <label for="daytimeDays">1週間のうち日中の在宅日数 (0〜7): </label>
-    <select id="daytimeDays">
-        <option value="">未選択</option>
-        <option value="0">0日</option>
-        <option value="1">1日</option>
-        <option value="2">2日</option>
-        <option value="3">3日</option>
-        <option value="4">4日</option>
-        <option value="5">5日</option>
-        <option value="6">6日</option>
-        <option value="7">7日</option>
-    </select>
-
-    <br><br>
-
-    <div id="result"></div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            function calculate() {
-                let monthlyUsageMax = parseFloat(document.getElementById("monthlyUsageMax").value) || 0;
-                let monthlyUsageMin = parseFloat(document.getElementById("monthlyUsageMin").value) || 0;
-                let panelOutput = parseFloat(document.getElementById("panelOutput").value) || 0;
-                let daytimeDays = document.getElementById("daytimeDays").value;
-
-                // 年間電気使用量の計算（月最高 + 月最低の平均 × 12）
-                let annualUsage = ((monthlyUsageMax + monthlyUsageMin) / 2) * 12;
-
-                let result = calculateSolarImpact(annualUsage, panelOutput, daytimeDays);
-
-                document.getElementById("result").innerHTML = `
-                    <p>年間電気使用量 (計算値): <strong>${annualUsage.toLocaleString()} kWh</strong></p>
-                    <p>太陽光なしの年間電気料金: <strong>${result.noSolarAnnualCost.toLocaleString()} 円</strong></p>
-                    <p>太陽光ありの年間電気料金: <strong>${result.solarAnnualCost.toLocaleString()} 円</strong></p>
-                    <p>節電金額: <strong>${result.savings.toLocaleString()} 円</strong></p>
-                    <p>年間太陽光の電気使用量: <strong>${result.annualSolarUsage.toLocaleString()} kWh</strong></p>
-                    <p>日中電気使用率 (補正後): <strong>${(result.daytimeUsageRatio * 100).toFixed(2)} %</strong></p>
-                    <p>日間発電出力: <strong>${result.dailySolarOutput.toFixed(2)} kWh/日</strong></p>
-                    <p>年間売電量: <strong>${result.annualSolarSell.toLocaleString()} kWh</strong></p>
-                    <p>年間売電金額: <strong>${result.annualSellIncome.toLocaleString()} 円</strong></p>
-                `;
-            }
-
-            function calculateElectricityCost(annualUsage) {
-                const basicFee50A = 1558.75 * 12;
-                const basicFee60A = 1870.50 * 12;
-
-                const tier1Limit = 120;
-                const tier2Limit = 300;
-
-                const tier1Rate = 29.3;
-                const tier2Rate = 36.4;
-                const tier3Rate = 40.49;
-                const discountPerKwh = 3.0;
-
-                let monthlyUsage = annualUsage / 12;
-                let monthlyCost = 0;
-
-                if (monthlyUsage <= tier1Limit) {
-                    monthlyCost = monthlyUsage * tier1Rate;
-                } else if (monthlyUsage <= tier2Limit) {
-                    monthlyCost = (tier1Limit * tier1Rate) + ((monthlyUsage - tier1Limit) * tier2Rate);
-                } else {
-                    monthlyCost = (tier1Limit * tier1Rate) + ((tier2Limit - tier1Limit) * tier2Rate) + ((monthlyUsage - tier2Limit) * tier3Rate);
-                }
-
-                monthlyCost -= monthlyUsage * discountPerKwh;
-
-                let annualEnergyCost = monthlyCost * 12;
-                let contractA = annualUsage < 4200 ? 50 : 60;
-                let basicFee = contractA === 50 ? basicFee50A : basicFee60A;
-
-                return Math.round(basicFee + annualEnergyCost);
-            }
-
-            function calculateSolarImpact(annualUsage, panelOutput, daytimeDays) {
-                let baseDaytimeUsageRatio = 0.315;
-                let adjustmentMap = {
-                    "0": -0.022,
-                    "1": -0.011,
-                    "2": 0.00,
-                    "3": 0.011,
-                    "4": 0.022,
-                    "5": 0.033,
-                    "6": 0.044,
-                    "7": 0.055
-                };
-
-                let adjustment = adjustmentMap[daytimeDays] || 0.00;
-                let daytimeUsageRatio = baseDaytimeUsageRatio + adjustment;
-
-                let daytimeUsage = (annualUsage / 365) * daytimeUsageRatio;
-                let dailySolarOutput = panelOutput * 3.15;
-                let annualSolarGeneration = dailySolarOutput * 365;
-                let annualSolarUsage = Math.min(annualSolarGeneration, daytimeUsage * 365);
-                let annualSolarSell = annualSolarGeneration - annualSolarUsage;
-                let annualSellIncome = annualSolarSell * 8.5;
-
-                let newAnnualUsage = annualUsage - annualSolarUsage;
-
-                let noSolarAnnualCost = calculateElectricityCost(annualUsage);
-                let solarAnnualCost = calculateElectricityCost(newAnnualUsage);
-                let savings = noSolarAnnualCost - solarAnnualCost;
-
-                return {
-                    noSolarAnnualCost: noSolarAnnualCost,
-                    solarAnnualCost: solarAnnualCost,
-                    savings: savings,
-                    annualSolarUsage: Math.round(annualSolarUsage),
-                    daytimeUsageRatio: daytimeUsageRatio,
-                    dailySolarOutput: dailySolarOutput,
-                    annualSolarSell: Math.round(annualSolarSell),
-                    annualSellIncome: Math.round(annualSellIncome)
-                };
-            }
-
-            document.getElementById("monthlyUsageMax").addEventListener("input", calculate);
-            document.getElementById("monthlyUsageMin").addEventListener("input", calculate);
-            document.getElementById("panelOutput").addEventListener("input", calculate);
-            document.getElementById("daytimeDays").addEventListener("change", calculate);
-
-            calculate();
-        });
-    </script>
+  <script src="script.js"></script>
 </body>
 </html>
