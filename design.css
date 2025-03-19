@@ -1,11 +1,22 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #F5F5DC; /* ベージュ */
+  background-color: #fffbf5; /* 埋め込み先の背景色に合わせる */
   margin: 0;
   padding: 20px;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  min-height: 100vh;
+}
+
+.frame-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 900px;
 }
 
 h2, h3 {
@@ -16,7 +27,6 @@ h2, h3 {
 /* 入力フォーム全体 */
 .input-container {
   width: 100%;
-  max-width: 900px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -48,7 +58,6 @@ input, select {
 /* 結果表示エリア */
 #result {
   width: 100%;
-  max-width: 900px;
   background: #FFF3E0; /* 薄いオレンジ */
   padding: 20px;
   border-radius: 10px;
@@ -58,17 +67,5 @@ input, select {
 /* 経済効果グラフ */
 canvas {
   width: 100%;
-  max-width: 900px;
   margin-bottom: 20px;
-}
-
-/* 設備導入費用入力エリア（グラフ下部） */
-.equipment-input {
-  width: 100%;
-  max-width: 900px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-.equipment-input input {
-  width: 200px;
 }
