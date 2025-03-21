@@ -1,88 +1,132 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>太陽光発電シミュレーター</title>
-  <link rel="stylesheet" href="design.css">
+  <link rel="stylesheet" href="design.css" />
+  
   <!-- Chart.js v3 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Chart.js Annotation Plugin v1.1.0 (Chart.js v3対応) -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
+  <!-- メインスクリプト -->
+  <script src="script.js"></script>
 </head>
 <body>
   <div class="frame-container">
     <h2>太陽光発電シミュレーター</h2>
 
-    <!-- 入力フォーム：2行×2列レイアウト + 蓄電池選択行 -->
     <div class="input-container">
-      <!-- 1行目 -->
-      <div class="input-row">
-        <div class="input-item">
-          <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
-          <input type="number" id="monthlyUsageMax" min="0" value="650">
+
+      <!-- ▼ セクション1：電気使用情報 -->
+      <div class="form-section">
+
+        <!-- 見出し＋「電気代から入力」チェックボックスを同じ行に -->
+        <div class="section-header">
+          <!-- 見出しを中央揃え -->
+          <h3 class="centered-title">電気使用情報</h3>
+          <!-- 右側に小さく配置 -->
+          <label for="costInputCheckbox" class="checkbox-label small-check-label header-checkbox-right" id="costCheckboxLabel">
+            電気代から入力
+            <input type="checkbox" id="costInputCheckbox" />
+          </label>
         </div>
-        <div class="input-item">
-          <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
-          <input type="number" id="monthlyUsageMin" min="0" value="400">
+
+        <!-- 使用電気量入力欄（未チェック時に表示） -->
+        <div class="input-row" id="usageInputContainer" style="display: flex;">
+          <div class="input-item">
+            <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
+            <input type="number" id="monthlyUsageMax" min="0" value="650" />
+          </div>
+          <div class="input-item">
+            <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
+            <input type="number" id="monthlyUsageMin" min="0" value="400" />
+          </div>
         </div>
-      </div>
-      <!-- 2行目 -->
-      <div class="input-row">
-        <div class="input-item">
-          <!-- パネル容量の入力欄は1kW～25kWのみ受け付け -->
-          <label for="panelOutput">太陽光パネルの額面出力 (kW) ※1kW～25kW限定:</label>
-          <input type="number" id="panelOutput" min="1" max="25" step="0.1" value="5.0">
-        </div>
-        <div class="input-item">
-          <label for="daytimeDays">日中在宅日数 (0〜7):</label>
-          <select id="daytimeDays">
-            <option value="0">0日</option>
-            <option value="1">1日</option>
-            <option value="2" selected>2日</option>
-            <option value="3">3日</option>
-            <option value="4">4日</option>
-            <option value="5">5日</option>
-            <option value="6">6日</option>
-            <option value="7">7日</option>
-          </select>
-        </div>
-      </div>
-      <!-- 蓄電池選択行 -->
-      <div class="input-row">
-        <div class="input-item">
-          <label for="battery">蓄電池の選択:</label>
-          <select id="battery">
-            <option value="">蓄電池なし</option>
-            <option value="5.12">OFF GRID WORLD OG-BAT512 (5.12kWh)</option>
-            <option value="10.24">OFF GRID WORLD OG-BAT1024 (10.24kWh)</option>
-            <option value="15.36">OFF GRID WORLD OG-BAT1536 (15.36kWh)</option>
-            <option value="3.3">住友電気工業 PDS-1600S03E (3.3kWh)</option>
-            <option value="12.8">住友電気工業 PDH-6000s01 (12.8kWh)</option>
-            <option value="other">その他（自分で入力）</option>
-          </select>
-        </div>
-        <div class="input-item" id="batteryOtherContainer" style="display: none;">
-          <label for="batteryOtherCapacity">蓄電池容量 (kWh):</label>
-          <input type="number" id="batteryOtherCapacity" min="0" step="0.1" placeholder="例: 8.0">
-          <br>
-          <label for="batteryOtherCost">蓄電池費用 (円):</label>
-          <input type="number" id="batteryOtherCost" min="0" step="1" placeholder="例: 120000">
+
+        <!-- 電気代金入力欄（チェック時に表示） -->
+        <div class="input-row" id="costInputContainer" style="display: none;">
+          <div class="input-item">
+            <label for="monthlyCostMax">月最高電気代金 (円):</label>
+            <input type="number" id="monthlyCostMax" min="0" value="0" />
+          </div>
+          <div class="input-item">
+            <label for="monthlyCostMin">月最低電気代金 (円):</label>
+            <input type="number" id="monthlyCostMin" min="0" value="0" />
+          </div>
         </div>
       </div>
+      <!-- ▲ セクション1：電気使用情報 ここまで -->
+
+      <!-- セクション2：システム設定 -->
+      <div class="form-section">
+        <div class="section-header">
+          <h3 class="centered-title">システム設定</h3>
+          <label for="solarInstalled" class="checkbox-label small-check-label header-checkbox-right" id="solarCheckboxLabel">
+            太陽光導入済
+            <input type="checkbox" id="solarInstalled" />
+          </label>
+        </div>
+
+        <div class="input-row">
+          <div class="input-item">
+            <label for="panelOutput">太陽光パネルの額面出力 (kW) ※1kW〜25kW限定:</label>
+            <input type="number" id="panelOutput" min="1" max="25" step="0.1" value="5.0" />
+          </div>
+          <div class="input-item">
+            <label for="daytimeDays">日中在宅日数 (0〜7):</label>
+            <select id="daytimeDays">
+              <option value="0">0日</option>
+              <option value="1">1日</option>
+              <option value="2" selected>2日</option>
+              <option value="3">3日</option>
+              <option value="4">4日</option>
+              <option value="5">5日</option>
+              <option value="6">6日</option>
+              <option value="7">7日</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- セクション3：蓄電池設定 -->
+      <div class="form-section">
+        <h3 class="centered-title">蓄電池設定</h3>
+        <div class="input-row">
+          <div class="input-item">
+            <label for="battery">蓄電池の選択:</label>
+            <select id="battery">
+              <option value="">蓄電池なし</option>
+              <option value="5.12">OFF GRID WORLD OG-BAT512 (5.12kWh)</option>
+              <option value="10.24">OFF GRID WORLD OG-BAT1024 (10.24kWh)</option>
+              <option value="15.36">OFF GRID WORLD OG-BAT1536 (15.36kWh)</option>
+              <option value="3.3">住友電気工業 PDS-1600S03E (3.3kWh)</option>
+              <option value="12.8">住友電気工業 PDH-6000s01 (12.8kWh)</option>
+              <option value="other">その他（自分で入力）</option>
+            </select>
+          </div>
+          <div class="input-item battery-other-container" id="batteryOtherContainer" style="display: none;">
+            <label for="batteryOtherCapacity">蓄電池容量 (kWh):</label>
+            <input type="number" id="batteryOtherCapacity" min="0" step="0.1" placeholder="例: 8.0" />
+            <br />
+            <label for="batteryOtherCost">蓄電池費用 (円):</label>
+            <input type="number" id="batteryOtherCost" min="0" step="1" placeholder="例: 120000" />
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- 結果表示エリア -->
     <div id="result"></div>
 
     <!-- 経済効果グラフ -->
-    <h3>経済効果（節電金額＋売電金額 の累積 vs 設備導入費用）</h3>
+    <h3 id="graphTitle">経済効果（節電金額＋売電金額 の累積 vs 設備導入費用）</h3>
     <canvas id="economicEffectChart"></canvas>
 
-    <!-- デバッグ用：設備導入費用の根拠表示 -->
-    <div id="debugEquipmentCost" style="margin-top: 10px; font-size: 14px; color: #555;"></div>
-
-    <script src="script.js"></script>
+    <!-- デバッグ用 -->
+    <div id="debugEquipmentCost" class="debug-info"></div>
   </div>
 </body>
 </html>
