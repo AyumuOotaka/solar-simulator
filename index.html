@@ -229,9 +229,6 @@
 document.getElementById("submitBtn").addEventListener("click", async function(e) {
   e.preventDefault();
 
-  // 必須チェック（追加するならここで拡張可能）
-
-  // フォーム1からの取得（例：太陽光シミュレータ）
   const form1Data = {
     monthlyUsageMax: document.getElementById("monthlyUsageMax").value,
     monthlyUsageMin: document.getElementById("monthlyUsageMin").value,
@@ -246,7 +243,6 @@ document.getElementById("submitBtn").addEventListener("click", async function(e)
     batteryOtherCost: document.getElementById("batteryOtherCost").value
   };
 
-  // フォーム2からの取得（お客様情報・ヒアリング）
   const form2Data = {
     userName: document.getElementById("userName").value,
     userAddress: document.getElementById("userAddress").value,
@@ -274,14 +270,13 @@ document.getElementById("submitBtn").addEventListener("click", async function(e)
     ...form2Data
   };
 
-  // Google Apps ScriptのURL（あなたのURLに差し替えてください）
   const endpoint = "https://script.google.com/macros/s/AKfycbwtT1wgTs-npi6GliFH9kqdEgBHf52lEkY-PPdvr9on5_D2NlF5xX6OW65_z6oksicD/exec";
 
   try {
     const res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(payload).toString()
     });
 
     const result = await res.json();
