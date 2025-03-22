@@ -135,13 +135,14 @@ canvas {
   margin-bottom: 20px;
 }
 
-/* デバッグ情報 */
+/* デバッグ情報（削除・またはコメントアウト）
 .debug-info {
   margin-top: 10px;
   font-size: 14px;
   color: #555;
   white-space: pre-wrap;
 }
+*/
 
 /* 統一されたエラーメッセージ */
 .error-message {
