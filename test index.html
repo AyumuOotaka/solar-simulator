@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>最小構成テスト</title>
+</head>
+<body>
+  <h1>最小構成テスト</h1>
+  
+  <!-- 単純なテキスト入力 -->
+  <input type="text" id="testInput" placeholder="テスト用テキスト" />
+  <!-- 送信ボタン -->
+  <button id="submitBtn">送信</button>
+
+  <script>
+    document.getElementById("submitBtn").addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      // 入力欄の値をオブジェクト化
+      const payload = {
+        testValue: document.getElementById("testInput").value
+      };
+
+      // Google Apps Script のWebアプリURLに差し替えてください
+      const endpoint = "https://script.google.com/macros/s/AKfycbwtT1wgTs-npi6GliFH9kqdEgBHf52lEkY-PPdvr9on5_D2NlF5xX6OW65_z6oksicD/exec";
+
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          // シンプルリクエストにするため、URLSearchParamsでエンコード
+          body: new URLSearchParams(payload).toString()
+        });
+
+        // レスポンスをJSONとして受け取る
+        const data = await res.json();
+        console.log("Response:", data);
+
+        alert("送信完了！ スプレッドシートやGASのログを確認してください。");
+      } catch (error) {
+        console.error("送信エラー:", error);
+        alert("エラーが発生しました。");
+      }
+    });
+  </script>
+</body>
+</html>
