@@ -88,14 +88,15 @@
           <div class="input-item">
             <label for="battery">蓄電池の選択:</label>
             <select id="battery">
-              <option value="">蓄電池なし</option>
-              <option value="5.12">OFF GRID WORLD OG-BAT512 (5.12kWh)</option>
-              <option value="10.24">OFF GRID WORLD OG-BAT1024 (10.24kWh)</option>
-              <option value="15.36">OFF GRID WORLD OG-BAT1536 (15.36kWh)</option>
-              <option value="3.3">住友電気工業 PDS-1600S03E (3.3kWh)</option>
-              <option value="12.8">住友電気工業 PDH-6000s01 (12.8kWh)</option>
-              <option value="other">その他（自分で入力）</option>
-            </select>
+              <select id="battery">
+                <option value="">蓄電池なし</option>
+                <option value="OG-BAT512|5.12">OFF GRID WORLD OG-BAT512 (5.12kWh)</option>
+                <option value="OG-BAT1024|10.24">OFF GRID WORLD OG-BAT1024 (10.24kWh)</option>
+                <option value="OG-BAT1536|15.36">OFF GRID WORLD OG-BAT1536 (15.36kWh)</option>
+                <option value="PDS-1600S03E|3.3">住友電気工業 PDS-1600S03E (3.3kWh)</option>
+                <option value="PDH-6000s01|12.8">住友電気工業 PDH-6000s01 (12.8kWh)</option>
+                <option value="other">その他（自分で入力）</option>
+              </select>
           </div>
           <div class="input-item battery-other-container" id="batteryOtherContainer" style="display: none;">
             <label for="batteryOtherCapacity">蓄電池容量 (kWh):</label>
