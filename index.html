@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>最小構成テスト - CORSヘッダー付き</title>
+  <title>最小構成テスト - no-cors</title>
 </head>
 <body>
-  <h1>最小構成テスト - CORSヘッダー付き</h1>
+  <h1>最小構成テスト - no-cors</h1>
   
   <!-- 単純なテキスト入力 -->
   <input type="text" id="testInput" placeholder="テスト用テキスト" />
@@ -16,30 +16,26 @@
     document.getElementById("submitBtn").addEventListener("click", async (e) => {
       e.preventDefault();
 
-      // 入力欄の値をオブジェクト化
       const payload = {
         testValue: document.getElementById("testInput").value
       };
 
-      // Google Apps Script のWebアプリURLに差し替えてください
+      // GASのWebアプリのURLに置き換えてください
       const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
 
       try {
         const res = await fetch(endpoint, {
           method: "POST",
+          mode: "no-cors",  // ← これを追加
           headers: {
-            // プリフライトを抑制しやすい x-www-form-urlencoded
             "Content-Type": "application/x-www-form-urlencoded"
           },
-          // シンプルリクエストにするため、URLSearchParamsでエンコード
           body: new URLSearchParams(payload).toString()
         });
 
-        // レスポンスをJSONとして受け取る
-        const data = await res.json();
-        console.log("Response:", data);
-
-        alert("送信完了！ スプレッドシートやGASのログを確認してください。");
+        // mode: "no-cors" では opaque response となるため、res.json()は使えません。
+        // そのため、成功した場合はエラーが発生しなければ送信完了とみなします。
+        alert("送信完了！（レスポンスは取得できません）");
       } catch (error) {
         console.error("送信エラー:", error);
         alert("エラーが発生しました。");
