@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>最小構成テスト</title>
+  <title>最小構成テスト - CORSヘッダー付き</title>
 </head>
 <body>
-  <h1>最小構成テスト</h1>
+  <h1>最小構成テスト - CORSヘッダー付き</h1>
   
   <!-- 単純なテキスト入力 -->
   <input type="text" id="testInput" placeholder="テスト用テキスト" />
@@ -22,12 +22,13 @@
       };
 
       // Google Apps Script のWebアプリURLに差し替えてください
-      const endpoint = "https://script.google.com/macros/s/AKfycbwtT1wgTs-npi6GliFH9kqdEgBHf52lEkY-PPdvr9on5_D2NlF5xX6OW65_z6oksicD/exec";
+      const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
 
       try {
         const res = await fetch(endpoint, {
           method: "POST",
           headers: {
+            // プリフライトを抑制しやすい x-www-form-urlencoded
             "Content-Type": "application/x-www-form-urlencoded"
           },
           // シンプルリクエストにするため、URLSearchParamsでエンコード
