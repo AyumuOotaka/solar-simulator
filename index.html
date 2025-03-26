@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>太陽光発電シミュレーター</title>
+  <link rel="stylesheet" href="design.css" />
+
+  <!-- Chart.js v3 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js Annotation Plugin v1.1.0 (Chart.js v3対応) -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
+  <!-- メインスクリプト -->
+  <script src="script.js"></script>
+</head>
+
+<body>
+  <div class="frame-container">
+    <h2>太陽光発電シミュレーター</h2>
+
+    <div class="input-container">
+      <!-- ▼ セクション1：電気使用情報 -->
+      <div class="form-section">
+        <div class="section-header">
+          <h3 class="centered-title">電気使用情報</h3>
+          <label for="costInputCheckbox" class="checkbox-label small-check-label header-checkbox-right" id="costCheckboxLabel">
+            電気代から入力
+            <input type="checkbox" id="costInputCheckbox" />
+          </label>
+        </div>
+        <div class="input-row" id="usageInputContainer" style="display: flex;">
+          <div class="input-item">
+            <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
+            <input type="number" id="monthlyUsageMax" min="0" value="650" />
+          </div>
+          <div class="input-item">
+            <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
+            <input type="number" id="monthlyUsageMin" min="0" value="400" />
+          </div>
+        </div>
+        <div class="input-row" id="costInputContainer" style="display: none;">
+          <div class="input-item">
+            <label for="monthlyCostMax">月最高電気代金 (円):</label>
+            <input type="number" id="monthlyCostMax" min="0" value="0" />
+          </div>
+          <div class="input-item">
+            <label for="monthlyCostMin">月最低電気代金 (円):</label>
+            <input type="number" id="monthlyCostMin" min="0" value="0" />
+          </div>
+        </div>
+      </div>
+      <!-- ▲ セクション1：電気使用情報 ここまで -->
+
+      <!-- セクション2：システム設定 -->
+      <div class="form-section">
+        <div class="section-header">
+          <h3 class="centered-title">システム設定</h3>
+          <label for="solarInstalled" class="checkbox-label small-check-label header-checkbox-right" id="solarCheckboxLabel">
+            太陽光導入済
+            <input type="checkbox" id="solarInstalled" />
+          </label>
+        </div>
+        <div class="input-row">
+          <div class="input-item">
+            <label for="panelOutput">太陽光パネルの額面出力 (kW) ※1kW〜25kW限定:</label>
+            <input type="number" id="panelOutput" min="1" max="25" step="0.1" value="5.0" />
+          </div>
+          <div class="input-item">
+            <label for="daytimeDays">日中在宅日数 (0〜7):</label>
+            <select id="daytimeDays">
+              <option value="0">0日</option>
+              <option value="1">1日</option>
+              <option value="2" selected>2日</option>
+              <option value="3">3日</option>
+              <option value="4">4日</option>
+              <option value="5">5日</option>
+              <option value="6">6日</option>
+              <option value="7">7日</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- セクション3：蓄電池設定 -->
+      <div class="form-section">
+        <h3 class="centered-title">蓄電池設定</h3>
+        <div class="input-row">
+          <div class="input-item">
+            <label for="battery">蓄電池の選択:</label>
+              <select id="battery">
+                <option value="">蓄電池なし</option>
+                <option value="OG-BAT512|5.12">OFF GRID WORLD OG-BAT512 (5.12kWh)</option>
+                <option value="OG-BAT1024|10.24">OFF GRID WORLD OG-BAT1024 (10.24kWh)</option>
+                <option value="OG-BAT1536|15.36">OFF GRID WORLD OG-BAT1536 (15.36kWh)</option>
+                <option value="PDS-1600S03E|3.3">住友電気工業 PDS-1600S03E (3.3kWh)</option>
+                <option value="PDH-6000s01|12.8">住友電気工業 PDH-6000s01 (12.8kWh)</option>
+                <option value="other">その他（自分で入力）</option>
+              </select>
+          </div>
+          <div class="input-item battery-other-container" id="batteryOtherContainer" style="display: none;">
+            <label for="batteryOtherCapacity">蓄電池容量 (kWh):</label>
+            <input type="number" id="batteryOtherCapacity" min="0" step="0.1" placeholder="例: 8.0" />
+            <br />
+            <label for="batteryOtherCost">蓄電池費用 (円):</label>
+            <input type="number" id="batteryOtherCost" min="0" step="1" placeholder="例: 120000" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果表示エリア -->
+    <div id="result"></div>
+
+    <!-- 経済効果グラフ -->
+    <h3 id="graphTitle">経済効果（節電金額＋売電金額 の累積 vs 設備導入費用）</h3>
+    <canvas id="economicEffectChart"></canvas>
+
+    <!-- ▼ フォーム2：個人情報とヒアリング -->
+    <div class="form-section" id="form2">
+      <h3 class="centered-title">個人情報</h3>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="userName">お名前: *</label>
+          <input type="text" id="userName" required />
+        </div>
+        <div class="input-item">
+          <label for="userAddress">ご住所: *</label>
+          <input type="text" id="userAddress" required />
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="userPhone">電話番号: *</label>
+          <input type="text" id="userPhone" pattern="^[0-9\-]+$" required />
+        </div>
+        <div class="input-item">
+          <label for="userEmail">メールアドレス: *</label>
+          <input type="email" id="userEmail" required />
+        </div>
+      </div>
+
+      <h3 class="centered-title">住宅ヒアリング</h3>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="roofMaterial">屋根の素材:</label>
+          <input type="text" id="roofMaterial" />
+        </div>
+        <div class="input-item">
+          <label for="roofSlope">屋根の傾斜（寸）:</label>
+          <input type="number" id="roofSlope" min="0" />
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="otherPanelPlace">屋根以外のパネル設置場所:</label>
+          <input type="text" id="otherPanelPlace" />
+        </div>
+        <div class="input-item">
+          <label for="electricCompany">電力会社・プラン:</label>
+          <input type="text" id="electricCompany" />
+        </div>
+      </div>
+      <!-- 塩害地域の選択 -->
+      <div class="input-row">
+        <div class="input-item">
+          <label>塩害地域:</label>
+          <div>
+            <input type="radio" name="saltArea" value="重塩害地域 (500m以下)" /> 重塩害地域 (500m以下)<br />
+            <input type="radio" name="saltArea" value="塩害地域(2km以下)" /> 塩害地域(2km以下)<br />
+            <input type="radio" name="saltArea" value="非塩害地域(2km以上)" /> 非塩害地域(2km以上)<br />
+          </div>
+        </div>
+      </div>
+
+      <h3 class="centered-title">意向ヒアリング</h3>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="competitorCount">他社お見積り件数: *</label>
+          <input type="number" id="competitorCount" min="0" required />
+        </div>
+        <div class="input-item">
+          <label>取得したいお見積り内容: *</label>
+          <div>
+            <input type="radio" name="estimateType" value="太陽光パネル" required /> 太陽光パネル<br />
+            <input type="radio" name="estimateType" value="蓄電池/バッテリー" /> 蓄電池/バッテリー<br />
+            <input type="radio" name="estimateType" value="その他商品" /> その他商品<br />
+            <input type="radio" name="estimateType" value="まだ決まっていない(相談したい等)" /> まだ決まっていない(相談したい等)
+          </div>
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="installTime">導入予定時期:</label>
+          <input type="text" id="installTime" />
+        </div>
+      </div>
+
+      <div class="input-row">
+        <input type="checkbox" id="privacyAgree" required />
+        <label for="privacyAgree">
+          <a href="https://offgridworld.studio.site/privacy-policy" target="_blank">プライバシーポリシー</a> に同意します。*
+        </label>
+      </div>
+
+      <!-- ▼ 送信ボタン -->
+      <div style="text-align: center; margin-top: 20px;">
+        <button id="submitBtn">送信する</button>
+      </div>
+    </div>
+
+    <!-- デバッグ用エリア（不要なら削除） -->
+    <!-- <div id="debugEquipmentCost" class="debug-info"></div> -->
+  </div>
+
+  <script>
+    document.getElementById("submitBtn").addEventListener("click", async function(e) {
+      e.preventDefault();
+
+      const form1Data = {
+        monthlyUsageMax: document.getElementById("monthlyUsageMax").value,
+        monthlyUsageMin: document.getElementById("monthlyUsageMin").value,
+        monthlyCostMax: document.getElementById("monthlyCostMax").value,
+        monthlyCostMin: document.getElementById("monthlyCostMin").value,
+        costInputChecked: document.getElementById("costInputCheckbox").checked,
+        solarInstalled: document.getElementById("solarInstalled").checked,
+        panelOutput: document.getElementById("panelOutput").value,
+        daytimeDays: document.getElementById("daytimeDays").value,
+        battery: document.getElementById("battery").value,
+        batteryOtherCapacity: document.getElementById("batteryOtherCapacity").value,
+        batteryOtherCost: document.getElementById("batteryOtherCost").value
+      };
+
+      const form2Data = {
+        userName: document.getElementById("userName").value,
+        userAddress: document.getElementById("userAddress").value,
+        userPhone: document.getElementById("userPhone").value,
+        userEmail: document.getElementById("userEmail").value,
+        roofMaterial: document.getElementById("roofMaterial").value,
+        roofSlope: document.getElementById("roofSlope").value,
+        otherPanelPlace: document.getElementById("otherPanelPlace").value,
+        electricCompany: document.getElementById("electricCompany").value,
+        saltArea: document.querySelector('input[name="saltArea"]:checked')?.value || "",
+        competitorCount: document.getElementById("competitorCount").value,
+        estimateType: document.querySelector('input[name="estimateType"]:checked')?.value || "",
+        installTime: document.getElementById("installTime").value,
+        privacyAgreed: document.getElementById("privacyAgree").checked
+      };
+
+      if (!form2Data.privacyAgreed) {
+        alert("プライバシーポリシーに同意が必要です。");
+        return;
+      }
+
+      const payload = {
+        timestamp: new Date().toLocaleString(),
+        ...form1Data,
+        ...form2Data
+      };
+
+      // GASのWebアプリURLに差し替えてください
+      const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
+
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          mode: "no-cors",  // no-corsモードで送信
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(payload).toString()
+        });
+
+        // no-corsの場合、opaqueなレスポンスとなるので内容は確認できません。
+        alert("送信完了しました。（レスポンスは取得できません）");
+      } catch (error) {
+        alert("送信中にエラーが発生しました。");
+        console.error(error);
+      }
+    });
+  </script>
+  <script>
+// ===== 電気代チェックボックスの切り替え =====
+const costInputCheckbox = document.getElementById("costInputCheckbox");
+const usageInputContainer = document.getElementById("usageInputContainer");
+const costInputContainer = document.getElementById("costInputContainer");
+
+costInputCheckbox.addEventListener("change", () => {
+  if (costInputCheckbox.checked) {
+    usageInputContainer.style.display = "none";
+    costInputContainer.style.display = "flex";  // or "block"
+  } else {
+    usageInputContainer.style.display = "flex"; // or "block"
+    costInputContainer.style.display = "none";
+  }
+});
+
+// ===== 蓄電池「その他」の切り替え =====
+const batterySelect = document.getElementById("battery");
+const batteryOtherContainer = document.getElementById("batteryOtherContainer");
+
+batterySelect.addEventListener("change", () => {
+  if (batterySelect.value === "other") {
+    batteryOtherContainer.style.display = "block";
+  } else {
+    batteryOtherContainer.style.display = "none";
+  }
+});
+</script>
+
+</body>
+</html>
