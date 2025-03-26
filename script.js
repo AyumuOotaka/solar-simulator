@@ -1,3 +1,5 @@
+console.log("script.js loaded");
+
 let economicEffectChart;
 let pricingData = null;
 
