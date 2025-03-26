@@ -360,6 +360,7 @@ function calculateSolarImpact(annualUsage, panelOutput, daytimeDays, batteryCapa
 
 // メインの計算処理
 function calculate() {
+  console.log("calculate() が呼ばれました");
   if (!pricingData) {
     console.error("pricingData is not loaded yet.");
     return;
@@ -376,22 +377,34 @@ function calculate() {
     return;
   }
 
+
   let batteryCapacity = 0, batteryCost = 0;
   if (batterySelect.value === "other") {
     batteryCapacity = parseFloat(document.getElementById("batteryOtherCapacity").value) || 0;
     batteryCost = parseInt(document.getElementById("batteryOtherCost").value) || 0;
   } else if (batterySelect.value !== "") {
-    batteryCapacity = parseFloat(batterySelect.value) || 0;
-    const batteryMapping = {
-      "5.12": "OG-BAT512",
-      "10.24": "OG-BAT1024",
-      "15.36": "OG-BAT1536",
-      "3.3": "PDS-1600S03E",
-      "12.8": "PDH-6000s01"
-    };
-    let key = batteryMapping[batterySelect.value];
-    batteryCost = pricingData.batteryPrices[key] || 0;
+    console.log("batterySelect.value:", batterySelect.value);
+    if (batterySelect.value.includes("|")) {
+      const parts = batterySelect.value.split("|");
+      const manufacturer = parts[0].trim();
+      batteryCapacity = parseFloat(parts[1].trim()) || 0;
+      console.log("Parsed manufacturer:", manufacturer, " capacity:", batteryCapacity);
+      batteryCost = pricingData.batteryPrices[manufacturer] || 0;
+      console.log("Looked up batteryCost:", batteryCost);
+    } else {
+      batteryCapacity = parseFloat(batterySelect.value) || 0;
+      const batteryMapping = {
+        "5.12": "OG-BAT512",
+        "10.24": "OG-BAT1024",
+        "15.36": "OG-BAT1536",
+        "3.3": "PDS-1600S03E",
+        "12.8": "PDH-6000s01"
+      };
+      let key = batteryMapping[batterySelect.value];
+      batteryCost = pricingData.batteryPrices[key] || 0;
+    }
   }
+  console.log("最終的な batteryCapacity:", batteryCapacity, " / batteryCost:", batteryCost);
 
   // パネルの1kW単価の計算（式：165,000 + 145,000 * exp(-0.293*(x-1))）
   let computedUnitPrice = 165000 + 145000 * Math.exp(-0.293 * (panelOutput - 1));
