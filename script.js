@@ -360,12 +360,12 @@ function calculateSolarImpact(annualUsage, panelOutput, daytimeDays, batteryCapa
 
 // メインの計算処理
 function calculate() {
-  console.log("calculate() が呼ばれました");
   if (!pricingData) {
     console.error("pricingData is not loaded yet.");
     return;
   }
 
+  // 入力値の取得
   let monthlyUsageMax = parseFloat(document.getElementById("monthlyUsageMax").value) || 0;
   let monthlyUsageMin = parseFloat(document.getElementById("monthlyUsageMin").value) || 0;
   let panelOutput = parseFloat(document.getElementById("panelOutput").value) || 0;
@@ -377,7 +377,7 @@ function calculate() {
     return;
   }
 
-
+  // 蓄電池の値の取得
   let batteryCapacity = 0, batteryCost = 0;
   if (batterySelect.value === "other") {
     batteryCapacity = parseFloat(document.getElementById("batteryOtherCapacity").value) || 0;
@@ -404,56 +404,68 @@ function calculate() {
       batteryCost = pricingData.batteryPrices[key] || 0;
     }
   }
-  console.log("最終的な batteryCapacity:", batteryCapacity, " / batteryCost:", batteryCost);
 
-  // パネルの1kW単価の計算（式：165,000 + 145,000 * exp(-0.293*(x-1))）
-  let computedUnitPrice = 165000 + 145000 * Math.exp(-0.293 * (panelOutput - 1));
-
-  // チェックボックス「太陽光導入済」の確認
-  let solarInstalled = document.getElementById("solarInstalled").checked;
-  let computedEquipmentCost = (panelOutput * computedUnitPrice) + batteryCost;
-  if (solarInstalled) {
-    computedEquipmentCost = batteryCost;
-  }
-
-  // 年間電気使用量の決定
+  // 年間使用量の決定
   let annualUsage;
   let costInputChecked = document.getElementById("costInputCheckbox").checked;
   if (costInputChecked) {
-    // 「電気代から入力」が有効な場合、月最高と月最低の電気料金を使用
     let monthlyCostMax = parseFloat(document.getElementById("monthlyCostMax").value) || 0;
     let monthlyCostMin = parseFloat(document.getElementById("monthlyCostMin").value) || 0;
     if (monthlyCostMax <= 0 || monthlyCostMin <= 0) {
       document.getElementById("result").innerHTML = "<p class=\"error-message\">エラー: 正しい月最高・月最低の電気料金を入力してください。</p>";
       return;
     }
-    // 各々から買電量（kWh/月）を逆算し、その平均を求める
     let usageFromMax = estimateMonthlyUsageFromCost(monthlyCostMax);
     let usageFromMin = estimateMonthlyUsageFromCost(monthlyCostMin);
     let monthlyUsage = (usageFromMax + usageFromMin) / 2;
     annualUsage = monthlyUsage * 12;
   } else {
-    // 通常は月最高・最低の電気使用量の平均から年間電気使用量を計算
     annualUsage = ((monthlyUsageMax + monthlyUsageMin) / 2) * 12;
   }
 
+  // パネル単価の算出（式：165,000 + 145,000 * exp(-0.293*(x-1))）
+  let computedUnitPrice = 165000 + 145000 * Math.exp(-0.293 * (panelOutput - 1));
+
+  // 「太陽光導入済」チェックボックスの状態
+  let solarInstalled = document.getElementById("solarInstalled").checked;
+  let computedEquipmentCost = (panelOutput * computedUnitPrice) + batteryCost;
+  if (solarInstalled) {
+    computedEquipmentCost = batteryCost;
+  }
+
+  // 太陽光導入前後のシミュレーション結果を計算
   let result = calculateSolarImpact(annualUsage, panelOutput, daytimeDays, batteryCapacity);
 
-  // 【通常の場合】
+  // 回収期間（breakEvenYear）の算出
+  let breakEvenYear = null;
   if (!solarInstalled) {
     let annualTotalSavings = result.savings + result.annualSellIncome;
-    let breakEvenYear = null;
     for (let year = 1; year <= 20; year++) {
       if (annualTotalSavings * year >= computedEquipmentCost) {
         breakEvenYear = year;
         break;
       }
     }
-    let breakEvenText = breakEvenYear
+  } else {
+    let resultWithoutBattery = calculateSolarImpact(annualUsage, panelOutput, daytimeDays, 0);
+    let batteryEconomicEffect = (result.savings - resultWithoutBattery.savings)
+                                - (resultWithoutBattery.annualSellIncome)
+                                + (result.annualSellIncome);
+    for (let year = 1; year <= 20; year++) {
+      if (batteryEconomicEffect * year >= computedEquipmentCost) {
+        breakEvenYear = year;
+        break;
+      }
+    }
+  }
+  let breakEvenText = breakEvenYear
       ? `元が取れる年数: <strong>${breakEvenYear} 年</strong>`
       : `20年以内に元が取れません`;
 
-    let resultHTML = `
+  // 結果表示用HTMLの作成
+  let resultHTML = "";
+  if (!solarInstalled) {
+    resultHTML = `
       <p>年間電気使用量: <strong>${annualUsage.toLocaleString()} kWh</strong></p>
       <p>太陽光なしの年間電気料金: <strong>${result.noSolarAnnualCost.toLocaleString()} 円</strong></p>
       <p>太陽光ありの年間電気料金: <strong>${result.solarAnnualCost.toLocaleString()} 円</strong></p>
@@ -464,35 +476,19 @@ function calculate() {
       <p>設備導入費用: <strong>${computedEquipmentCost.toLocaleString()} 円</strong></p>
       <p>${breakEvenText}</p>
     `;
-    document.getElementById("result").innerHTML = resultHTML;
-
-    let yearsArray = Array.from({ length: 20 }, (_, i) => i + 1);
-    let cumulativeSavings = yearsArray.map(y => result.savings * y);
-    let cumulativeSellIncome = yearsArray.map(y => result.annualSellIncome * y);
-
-    // デバッグ文字列は非表示
-    let debugText = ""; // "【デバッグ】 設備導入費用 = ... " などコメントアウト
-
-    updateGraphPlan2(yearsArray, cumulativeSavings, cumulativeSellIncome, computedEquipmentCost, debugText);
-
-  // 【太陽光導入済の場合】
+    updateGraphPlan2(
+      Array.from({ length: 20 }, (_, i) => i + 1),
+      Array.from({ length: 20 }, (_, i) => result.savings * (i + 1)),
+      Array.from({ length: 20 }, (_, i) => result.annualSellIncome * (i + 1)),
+      computedEquipmentCost,
+      ""
+    );
   } else {
     let resultWithoutBattery = calculateSolarImpact(annualUsage, panelOutput, daytimeDays, 0);
     let batteryEconomicEffect = (result.savings - resultWithoutBattery.savings)
-                              - (resultWithoutBattery.annualSellIncome)
-                              + (result.annualSellIncome);
-    let breakEvenYear = null;
-    for (let year = 1; year <= 20; year++) {
-      if (batteryEconomicEffect * year >= computedEquipmentCost) {
-        breakEvenYear = year;
-        break;
-      }
-    }
-    let breakEvenText = breakEvenYear
-      ? `元が取れる年数: <strong>${breakEvenYear} 年</strong>`
-      : `20年以内に元が取れません`;
-
-    let resultHTML = `
+                                - (resultWithoutBattery.annualSellIncome)
+                                + (result.annualSellIncome);
+    resultHTML = `
       <p>【太陽光導入済の場合】</p>
       <p>年間電気使用量: <strong>${annualUsage.toLocaleString()} kWh</strong></p>
       <p>太陽光導入済状態での節電金額: <strong>${result.savings.toLocaleString()} 円</strong></p>
@@ -503,15 +499,97 @@ function calculate() {
       <p>設備導入費用（バッテリーのみ）: <strong>${computedEquipmentCost.toLocaleString()} 円</strong></p>
       <p>${breakEvenText}</p>
     `;
-    document.getElementById("result").innerHTML = resultHTML;
-
-    let yearsArray = Array.from({ length: 20 }, (_, i) => i + 1);
-    let cumulativeBatteryEffect = yearsArray.map(y => batteryEconomicEffect * y);
-
-    // デバッグ文字列は非表示
-    let debugText = ""; // "【デバッグ】 (太陽光導入済) ... " などコメントアウト
-
-    document.getElementById("graphTitle").innerText = "蓄電池導入後経済効果の累積 vs 設備導入費用";
-    updateGraphBatteryEffect(yearsArray, cumulativeBatteryEffect, computedEquipmentCost, debugText);
+    updateGraphBatteryEffect(
+      Array.from({ length: 20 }, (_, i) => i + 1),
+      Array.from({ length: 20 }, (_, i) => batteryEconomicEffect * (i + 1)),
+      computedEquipmentCost,
+      ""
+    );
   }
+  document.getElementById("result").innerHTML = resultHTML;
+
+  // ===================== 以下、お勧め度評価 =====================
+  // ① 回収期間の速さ (E1)
+  let rec_E1 = 0;
+  let x1_val = breakEvenYear;
+  if (!x1_val || x1_val > 20) {
+    rec_E1 = -35;
+  } else {
+    if (!solarInstalled) {
+      rec_E1 = -0.03 * Math.pow(x1_val, 2) - 4.5 * x1_val + 60;
+    } else {
+      rec_E1 = -0.03 * Math.pow(x1_val, 2) - 4 * x1_val + 70;
+    }
+  }
+  rec_E1 = Math.max(-35, Math.min(35, rec_E1));
+
+  // ② 初期費用の安さ (E2)
+  let x2_val = computedEquipmentCost / 100000;
+  let rec_E2 = -0.01 * Math.pow(x2_val, 2) - 0.05 * x2_val + 11.2;
+  rec_E2 = Math.max(-10, Math.min(10, rec_E2));
+
+  // ③ 年間経済効果の高さ (E3)
+  let annualEconomicEffectVal = result.savings + result.annualSellIncome;
+  let rec_E3 = 0;
+  if (annualEconomicEffectVal <= 0) {
+    rec_E3 = -25;
+  } else {
+    rec_E3 = 0.01 * Math.pow(annualEconomicEffectVal, 2) - (500 / (annualEconomicEffectVal + 10)) + 25;
+  }
+  rec_E3 = Math.max(-25, Math.min(25, rec_E3));
+
+  // ④ 基本料金を除いた電気代削減割合 (E4)
+  let basicFee = (annualUsage < 4200) ? 1558.75 * 12 : 1870.50 * 12;
+  let reductionRatio = 0;
+  if ((result.solarAnnualCost - basicFee) !== 0) {
+    reductionRatio = ((result.noSolarAnnualCost - basicFee) / (result.solarAnnualCost - basicFee)) * 100;
+  }
+  let rec_E4 = 0;
+  if (!solarInstalled) {
+    rec_E4 = 0.0038 * Math.pow(reductionRatio, 2) - (2000 / (reductionRatio + 20)) + 40;
+  } else {
+    rec_E4 = 0.00125 * Math.pow(reductionRatio, 2) - (2000 / (reductionRatio + 20)) + 33;
+  }
+  rec_E4 = Math.max(-25, Math.min(25, rec_E4));
+
+  let recommendedDegree = 50 + rec_E1 + rec_E2 + rec_E3 + rec_E4;
+
+  // 営業部コメントの生成
+  let comments = [];
+  if (rec_E1 > 20) {
+    comments.push("回収期間が非常に短く、早期回収が期待できます。");
+  } else if (rec_E1 > 0) {
+    comments.push("回収期間は標準的ですが、改善の余地があります。");
+  } else {
+    comments.push("回収期間が長く、投資回収が難しい可能性があります。");
+  }
+  if (rec_E2 > 5) {
+    comments.push("初期費用が抑えられており、導入しやすいです。");
+  } else if (rec_E2 < 0) {
+    comments.push("初期費用が高めですので、注意が必要です。");
+  }
+  if (rec_E3 > 15) {
+    comments.push("年間経済効果が高く、大きな節約が期待できます。");
+  } else if (rec_E3 < 0) {
+    comments.push("年間経済効果が低いため、効果が出にくい可能性があります。");
+  }
+  if (rec_E4 > 15) {
+    comments.push("電気代削減効果が非常に高く、効率的な運用が可能です。");
+  } else if (rec_E4 < 0) {
+    comments.push("電気代削減効果が低く、期待通りの効果が得られない可能性があります。");
+  }
+
+  let recommendationHTML = `
+    <p>【お勧め度】 <strong>${Math.round(recommendedDegree)} %</strong></p>
+    <p>【評価詳細】</p>
+    <ul>
+      <li>回収期間の評価: ${rec_E1.toFixed(1)} %</li>
+      <li>初期費用の評価: ${rec_E2.toFixed(1)} %</li>
+      <li>年間経済効果の評価: ${rec_E3.toFixed(1)} %</li>
+      <li>電気代削減割合の評価: ${rec_E4.toFixed(1)} %</li>
+    </ul>
+    <p>【営業部コメント】</p>
+    <p>${comments.join("<br>")}</p>
+  `;
+  document.getElementById("result").innerHTML += recommendationHTML;
 }
