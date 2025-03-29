@@ -19,67 +19,92 @@
     <h2>太陽光発電シミュレーター</h2>
 
     <div class="input-container">
-      <!-- ▼ セクション1：電気使用情報 -->
       <div class="form-section">
-        <div class="section-header">
-          <h3 class="centered-title">電気使用情報</h3>
-          <label for="costInputCheckbox" class="checkbox-label small-check-label header-checkbox-right" id="costCheckboxLabel">
-            電気代から入力
-            <input type="checkbox" id="costInputCheckbox" />
-          </label>
-        </div>
-        <div class="input-row" id="usageInputContainer" style="display: flex;">
-          <div class="input-item">
-            <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
-            <input type="number" id="monthlyUsageMax" min="0" value="650" />
-          </div>
-          <div class="input-item">
-            <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
-            <input type="number" id="monthlyUsageMin" min="0" value="400" />
-          </div>
-        </div>
-        <div class="input-row" id="costInputContainer" style="display: none;">
-          <div class="input-item">
-            <label for="monthlyCostMax">月最高電気代金 (円):</label>
-            <input type="number" id="monthlyCostMax" min="0" value="0" />
-          </div>
-          <div class="input-item">
-            <label for="monthlyCostMin">月最低電気代金 (円):</label>
-            <input type="number" id="monthlyCostMin" min="0" value="0" />
-          </div>
-        </div>
-      </div>
-      <!-- ▲ セクション1：電気使用情報 ここまで -->
+  <div class="section-header">
+    <h3 class="centered-title">電気使用情報</h3>
+    <label for="costInputCheckbox" class="checkbox-label small-check-label header-checkbox-right" id="costCheckboxLabel">
+      電気代から入力
+      <input type="checkbox" id="costInputCheckbox" />
+    </label>
+  </div>
 
-      <!-- セクション2：システム設定 -->
-      <div class="form-section">
-        <div class="section-header">
-          <h3 class="centered-title">システム設定</h3>
-          <label for="solarInstalled" class="checkbox-label small-check-label header-checkbox-right" id="solarCheckboxLabel">
-            太陽光導入済
-            <input type="checkbox" id="solarInstalled" />
-          </label>
-        </div>
-        <div class="input-row">
-          <div class="input-item">
-            <label for="panelOutput">太陽光パネルの額面出力 (kW) ※1kW〜25kW限定:</label>
-            <input type="number" id="panelOutput" min="1" max="25" step="0.1" value="5.0" />
-          </div>
-          <div class="input-item">
-            <label for="daytimeDays">日中在宅日数 (0〜7):</label>
-            <select id="daytimeDays">
-              <option value="0">0日</option>
-              <option value="1">1日</option>
-              <option value="2" selected>2日</option>
-              <option value="3">3日</option>
-              <option value="4">4日</option>
-              <option value="5">5日</option>
-              <option value="6">6日</option>
-              <option value="7">7日</option>
-            </select>
-          </div>
-        </div>
-      </div>
+  <div class="input-row" id="usageInputContainer" style="display: flex;">
+    <div class="input-item">
+      <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
+      <input type="number" id="monthlyUsageMax" min="0" value="650" />
+    </div>
+    <div class="input-item">
+      <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
+      <input type="number" id="monthlyUsageMin" min="0" value="400" />
+    </div>
+  </div>
+  <div class="input-row" id="costInputContainer" style="display: none;">
+    <div class="input-item">
+      <label for="monthlyCostMax">月最高電気代金 (円):</label>
+      <input type="number" id="monthlyCostMax" min="0" value="0" />
+    </div>
+    <div class="input-item">
+      <label for="monthlyCostMin">月最低電気代金 (円):</label>
+      <input type="number" id="monthlyCostMin" min="0" value="0" />
+    </div>
+  </div>
+
+  <!-- ここに日中在宅日数を移動 -->
+  <div class="input-row">
+    <div class="input-item">
+      <label for="daytimeDays">日中在宅日数 (0〜7):</label>
+      <select id="daytimeDays">
+        <option value="0">0日</option>
+        <option value="1">1日</option>
+        <option value="2" selected>2日</option>
+        <option value="3">3日</option>
+        <option value="4">4日</option>
+        <option value="5">5日</option>
+        <option value="6">6日</option>
+        <option value="7">7日</option>
+      </select>
+    </div>
+  </div>
+</div>
+<!-- ▲ セクション1：電気使用情報 ここまで -->
+
+<!-- セクション2：システム設定 -->
+<div class="form-section">
+  <div class="section-header">
+    <h3 class="centered-title">システム設定</h3>
+    <label for="solarInstalled" class="checkbox-label small-check-label header-checkbox-right" id="solarCheckboxLabel">
+      太陽光導入済
+      <input type="checkbox" id="solarInstalled" />
+    </label>
+  </div>
+  <div class="input-row">
+    <div class="input-item">
+      <label for="panelOutput">太陽光パネルの額面出力 (kW) ※1kW〜25kW限定:</label>
+      <input type="number" id="panelOutput" min="1" max="25" step="0.1" value="5.0" />
+    </div>
+    <!-- ▼ 新しく追加する「太陽光施工年」の選択肢。チェックボックスがオンの場合にのみ表示 -->
+    <div class="input-item" id="solarYearContainer" style="display: none;">
+      <label for="solarYear">太陽光施工年:</label>
+      <select id="solarYear">
+        <!-- 2012年〜2025年 -->
+        <option value="2012">2012年</option>
+        <option value="2013">2013年</option>
+        <option value="2014">2014年</option>
+        <option value="2015">2015年</option>
+        <option value="2016">2016年</option>
+        <option value="2017">2017年</option>
+        <option value="2018">2018年</option>
+        <option value="2019">2019年</option>
+        <option value="2020">2020年</option>
+        <option value="2021">2021年</option>
+        <option value="2022">2022年</option>
+        <option value="2023">2023年</option>
+        <option value="2024">2024年</option>
+        <option value="2025">2025年</option>
+      </select>
+    </div>
+  </div>
+</div>
 
       <!-- セクション3：蓄電池設定 -->
       <div class="form-section">
