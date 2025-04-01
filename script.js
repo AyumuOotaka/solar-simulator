@@ -797,6 +797,7 @@ function calculateSolarImpact(annualUsage, panelOutput, daytimeDays, batteryCapa
 }
 
 
+
 /** ============ メイン計算関数 ============ **/
 /**
  * メインの計算処理。
