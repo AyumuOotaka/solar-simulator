@@ -42,6 +42,32 @@ window.addEventListener("DOMContentLoaded", function() {
   const usageContainer     = document.getElementById("usageInputContainer");
   const costContainer      = document.getElementById("costInputContainer");
 
+function validateRange(minId, maxId, errorId) {
+  const minInput = document.getElementById(minId);
+  const maxInput = document.getElementById(maxId);
+  const error = document.getElementById(errorId);
+
+  function check() {
+    const min = parseFloat(minInput.value);
+    const max = parseFloat(maxInput.value);
+
+    if (!isNaN(min) && !isNaN(max) && max < min) {
+      maxInput.setCustomValidity("最大値は最小値以上でなければなりません。");
+      error.textContent = "※ 最大値は最小値以上でなければなりません。";
+    } else {
+      maxInput.setCustomValidity("");
+      error.textContent = "";
+    }
+  }
+
+  minInput.addEventListener("input", check);
+  maxInput.addEventListener("input", check);
+}
+
+// 実行
+validateRange("monthlyUsageMin", "monthlyUsageMax", "usageRangeError");
+validateRange("monthlyCostMin", "monthlyCostMax", "costRangeError");
+
   costInputCheckbox.addEventListener("change", function() {
     if (this.checked) {
       usageContainer.style.display = "none";
@@ -272,43 +298,76 @@ function updateGraphPlan2(years, savingsArray, sellIncomeArray, installationCost
     }
   });
 }
-function updateGraphBatteryEffect(years, batteryEffectArray, equipmentCost) {
+function updateGraphBatteryEffects(yearlyResults, installationCost) {
   const ctx = document.getElementById("economicEffectChart").getContext("2d");
   if (economicEffectChart) {
     economicEffectChart.destroy();
   }
+  
+  // x軸の年度ラベル
+  const years = yearlyResults.map(r => r.year);
+  // 各年の年間蓄電池効果（batteryEffect）をそのまま配列に
+  const annualEffects = yearlyResults.map(r => r.batteryEffect);
+  
+  // 累積効果：n年目の値 = (n-1年目の累積効果) ；1年目は0
+  let cumulativeEffects = [];
+  let cum = 0;
+  for (let i = 0; i < annualEffects.length; i++) {
+    cumulativeEffects.push(cum);
+    cum += annualEffects[i];
+  }
+  
+  // 同じ棒グラフ内に2セグメントとして表示（Stacked Bar Chart）
+  const datasetCumulative = {
+    label: "累積蓄電池効果 (前年度まで)",
+    data: cumulativeEffects,
+    backgroundColor: "#0D47A1"  // ダークブルー
+  };
+  
+  const datasetAnnual = {
+    label: "年間蓄電池効果",
+    data: annualEffects,
+    backgroundColor: "#2196F3"  // 明るいブルー
+  };
+  
   economicEffectChart = new Chart(ctx, {
     type: "bar",
     data: {
       labels: years,
-      datasets: [
-        {
-          label: "蓄電池導入後経済効果の累積",
-          data: batteryEffectArray,
-          backgroundColor: "#2196F3"
-        }
-      ]
+      datasets: [datasetCumulative, datasetAnnual]
     },
     options: {
       responsive: true,
       scales: {
-        x: { beginAtZero: true },
-        y: { beginAtZero: true }
+        x: {
+          stacked: true
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true
+        }
       },
       plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ": " + context.parsed.y.toLocaleString() + " 円";
+            }
+          }
+        },
         annotation: {
           annotations: {
             equipmentLine: {
               type: "line",
               scaleID: "y",
-              value: equipmentCost,
-              borderColor: "red",
+              value: installationCost,
+              borderColor: "#0D47A1",
               borderWidth: 2,
               label: {
                 enabled: true,
-                content: "設備導入費用: " + equipmentCost.toLocaleString() + " 円",
+                content: "設備導入費用: " + installationCost.toLocaleString() + " 円",
                 position: "end",
-                backgroundColor: "rgba(255, 0, 0, 0.7)",
+                backgroundColor: "rgba(13, 71, 161, 0.7)",
                 font: { size: 12 }
               }
             }
@@ -451,6 +510,57 @@ function simulateYearlyResults(annualSellEnergy, baseSavings, panelOutput, solar
   };
 }
 
+/**
+ * 20年間の各年度ごとのシミュレーション結果を算出する関数
+ * （蓄電池あり／なしそれぞれのシナリオと、バッテリー追加による効果 batteryEffect を計算）
+ */
+/**
+ * 20年間の各年度ごとのシミュレーション結果を算出する関数
+ * （蓄電池あり／なしそれぞれのシナリオと、バッテリー追加による効果 batteryEffect を計算）
+ */
+function simulateYearlyBatteryEffects(annualUsage, panelOutput, daytimeDays, batteryCapacity, solarInstalled) {
+  const simulationYears = 20;
+  const nowYear = new Date().getFullYear();
+  // 太陽光導入済みの場合、ユーザー入力の施工年を使用。未導入なら現在の年を使用。
+  let solarYear = solarInstalled ? (parseInt(document.getElementById("solarYear").value, 10) || nowYear) : nowYear;
+  // 基準となる FIT 単価（施工年または現在の年から算出）
+  let baseRate = getBaseRate(solarInstalled ? solarYear : nowYear, panelOutput);
+  let passed = solarInstalled ? (nowYear - solarYear) : 0;
+  
+  let yearlyResults = [];
+  
+  for (let i = 1; i <= simulationYears; i++) {
+    // 各年度ごとの FIT 単価計算
+    let effectiveRemaining = 10 - (passed + i - 1);
+    let fitPrice = (effectiveRemaining > 0) ? baseRate : POST_FIT_PRICE;
+    
+    // 蓄電池ありシナリオの計算
+    let baseResult = calculateSolarImpact(annualUsage, panelOutput, daytimeDays, batteryCapacity);
+    // 年ごとの売電収入は、FIT単価を乗じて再計算
+    baseResult.annualSellIncome = Math.round(baseResult.annualSellEnergy * fitPrice);
+    
+    // 蓄電池なしシナリオの計算
+    let resultNoBattery = calculateSolarImpact(annualUsage, panelOutput, daytimeDays, 0);
+    resultNoBattery.annualSellIncome = Math.round(resultNoBattery.annualSellEnergy * fitPrice);
+    
+    // バッテリー効果（その年度ごとの差分）
+    let batteryEffect = (baseResult.savings - resultNoBattery.savings)
+                        - resultNoBattery.annualSellIncome
+                        + baseResult.annualSellIncome;
+    
+    yearlyResults.push({
+      year: i,
+      fitPrice: fitPrice,
+      batterySavings: baseResult.savings,
+      noBatterySavings: resultNoBattery.savings,
+      batterySellIncome: baseResult.annualSellIncome,
+      noBatterySellIncome: resultNoBattery.annualSellIncome,
+      batteryEffect: batteryEffect
+    });
+  }
+  
+  return yearlyResults;
+}
 
 /** ==================== ラベル化 & コメント生成 ==================== **/
 function getE1Label(val) {
@@ -689,8 +799,8 @@ function simulateAverageSellIncome(totalSellEnergy, panelOutput, solarInstalled)
   let totalIncome = 0;
   
   if (!solarInstalled) {
-    // 新規導入の場合：施工年 = nowYear, FIT期間はパネル容量に応じて
-    let fitYears = (panelOutput < 10) ? 10 : 20;
+    // 新規導入の場合：施工年 = nowYear, FIT期間は10年固定
+    let fitYears = 10;
     let baseRate = getBaseRate(nowYear, panelOutput);
     for (let i = 1; i <= simulationYears; i++) {
       let sellPrice = (i <= fitYears) ? baseRate : POST_FIT_PRICE;
@@ -699,7 +809,7 @@ function simulateAverageSellIncome(totalSellEnergy, panelOutput, solarInstalled)
   } else {
     // 導入済みの場合：施工年はユーザー入力の solarYear を使用
     let solarYear = parseInt(document.getElementById("solarYear").value, 10) || nowYear;
-    let fitYears = (panelOutput < 10) ? 10 : 20;
+    let fitYears = 10;
     let baseRate = getBaseRate(solarYear, panelOutput);
     let passed = nowYear - solarYear;
     for (let i = 1; i <= simulationYears; i++) {
@@ -810,6 +920,7 @@ function calculate() {
     return;
   }
 
+
   // 1) 入力値の取得
   const monthlyUsageMax = parseFloat(document.getElementById("monthlyUsageMax").value) || 0;
   const monthlyUsageMin = parseFloat(document.getElementById("monthlyUsageMin").value) || 0;
@@ -913,7 +1024,14 @@ function calculate() {
   const simulationData = simulateYearlyResults(annualSellEnergy, detailedSavings, panelOutput, solarInstalled);
 
   // 10) グラフ描画（updateGraphDetailed() を使用）
+if (solarInstalled && batteryCapacity > 0) {
+  // 蓄電池導入の場合は、20年間の batteryEffect を算出し、蓄電池効果グラフを描画
+  let yearlyBatteryEffects = simulateYearlyBatteryEffects(annualUsage, panelOutput, daytimeDays, batteryCapacity, solarInstalled);
+  updateGraphBatteryEffects(yearlyBatteryEffects, computedEquipmentCost);
+} else {
+  // それ以外は従来のグラフ描画（詳細シミュレーション結果）
   updateGraphDetailed(simulationData, computedEquipmentCost);
+}
 
   // 11) 詳細シミュレーション結果の表示（1年目の値を使用）
   let resultHTML = `<h3>詳細シミュレーション結果</h3>
@@ -964,8 +1082,9 @@ function calculate() {
       }
     }
   } else {
+    // 既存の太陽光導入済の場合は、バッテリーなしのシナリオも計算する
     const resultNoBattery = calculateSolarImpact(annualUsage, panelOutput, daytimeDays, 0);
-    let batteryEffect = (baseResult.savings - resultNoBattery.savings)
+    const batteryEffect = (baseResult.savings - resultNoBattery.savings)
                         - resultNoBattery.annualSellIncome
                         + baseResult.annualSellIncome;
     for (let y = 1; y <= 20; y++) {
@@ -974,13 +1093,18 @@ function calculate() {
         break;
       }
     }
+    // デバッグ情報の追加（このブロック内なら resultNoBattery は定義済み）
+    resultHTML += `<div id="debugInfo" style="margin-top:20px; padding:10px; background:#eef; border:1px solid #99c;">
+      <h3>デバッグ情報 (蓄電池追加時)</h3>
+      <pre>resultNoBattery: ${JSON.stringify(resultNoBattery, null, 2)}</pre>
+      <pre>baseResult: ${JSON.stringify(baseResult, null, 2)}</pre>
+      <pre>batteryEffect: ${batteryEffect}</pre>
+    </div>`;
   }
   const breakEvenText = (breakEvenYear)
     ? `元が取れる年数: <strong>${breakEvenYear} 年</strong>`
     : `20年以内に元が取れません`;
   resultHTML += `<p>${breakEvenText}</p>`;
-
-  document.getElementById("result").innerHTML = resultHTML;
 
   // ----- お勧め度評価（従来の評価ロジック） -----
   let batteryInstalledFlag = (batteryCapacity > 0);
@@ -998,9 +1122,57 @@ function calculate() {
   let rec_E2 = -0.01 * Math.pow(costFactor, 2) - 0.05 * costFactor + 11.2;
   rec_E2 = Math.max(-10, Math.min(10, rec_E2));
 
-  let x3 = (detailedSavings + baseResult.annualSellEnergy) / 10000;
-  let rec_E3 = (x3 <= 0) ? -25 : (0.01 * Math.pow(x3, 2) - (500 / (x3 + 10)) + 25);
-  rec_E3 = Math.max(-25, Math.min(25, rec_E3));
+  // 平均売電金額を取得
+let avgSellIncome = simulateAverageSellIncome(baseResult.annualSellEnergy, panelOutput, solarInstalled);
+
+// ---------------------------
+// 年間経済効果（節電＋売電）
+const annualTotalEffect = detailedSavings + avgSellIncome;
+
+// 導入前の年間電気代
+const preSolarAnnualCost = baseResult.noSolarAnnualCost;
+
+// ---------------------------
+// ① 経験値ベース（10点スケーリング）
+// ---------------------------
+const x3_legacy = annualTotalEffect / 10000;
+
+let raw_legacy_score = (x3_legacy <= 0)
+  ? -25
+  : (0.01 * Math.pow(x3_legacy, 2) - (500 / (x3_legacy + 8)) + 32);  // 修正ポイント
+raw_legacy_score = Math.max(-25, Math.min(25, raw_legacy_score));
+const rec_E3_legacy_scaled = raw_legacy_score * (10 / 25);
+
+// ---------------------------
+// ② 電気代カバー率ベース（15点）
+// ---------------------------
+function getRatioScoreHybridFromEffect(effect, baselineCost) {
+  if (baselineCost <= 0) return -15;
+  const x = effect / baselineCost;
+
+  if (x <= 0.4) {
+    return Math.max(-15, 75 * (x - 0.2) - 15);  // 線形セクション
+  } else {
+    const offsetA = x - 0.2;  // 修正：3次項の基準
+    const offsetB = x - 0.4;  // 修正：16.53項の基準は変わらず
+    return Math.min(15, 10 * Math.pow(offsetA, 3) + 16.53 * offsetB);
+  }
+}
+
+const rec_E3_ratio_scaled = getRatioScoreHybridFromEffect(annualTotalEffect, preSolarAnnualCost);
+
+// ---------------------------
+// ③ 合計スコア（最大25点）
+// ---------------------------
+const rec_E3 = rec_E3_legacy_scaled + rec_E3_ratio_scaled;
+
+// ---------------------------
+// ✅ デバッグ出力
+// ---------------------------
+console.log("【E3デバッグ】");
+console.log("経験値ベース (E3 legacy):", rec_E3_legacy_scaled.toFixed(2), "/10");
+console.log("電気代カバー率ベース (E3 ratio):", rec_E3_ratio_scaled.toFixed(2), "/15");
+console.log("最終合計スコア (rec_E3):", rec_E3.toFixed(2), "/25");
 
   const basicFee = (annualUsage < 4200) ? 1558.75 * 12 : 1870.50 * 12;
   let preElectricity = baseResult.noSolarAnnualCost - basicFee;
@@ -1017,20 +1189,49 @@ function calculate() {
   let recommendedDegree = 50 + rec_E1 + rec_E2 + rec_E3 + rec_E4;
   const salesComment = generateSalesComment(rec_E1, rec_E2, rec_E3, rec_E4);
 
-  let recommendationHTML = `
-    <hr>
-    <p><strong>【お勧め度】</strong> ${Math.round(recommendedDegree)} %</p>
-    <p><strong>【評価詳細】</strong></p>
-    <ul>
-      <li>回収期間の評価: ${rec_E1.toFixed(1)} %</li>
-      <li>初期費用の評価: ${rec_E2.toFixed(1)} %</li>
-      <li>年間経済効果の評価: ${rec_E3.toFixed(1)} %</li>
-      <li>電気代削減割合の評価: ${rec_E4.toFixed(1)} %</li>
-    </ul>
-    <p><strong>【営業部コメント】</strong></p>
-    <p>${salesComment}</p>
-  `;
-  document.getElementById("result").innerHTML += recommendationHTML;
+let recommendationHTML = `
+  <hr>
+  <p><strong>【お勧め度】</strong> ${Math.round(recommendedDegree)} %</p>
+  <p><strong>【評価詳細】</strong></p>
+  <ul>
+    <li>回収期間の評価: ${rec_E1.toFixed(1)} % <span class="maxScore">(±35%)</span></li>
+    <li>初期費用の評価: ${rec_E2.toFixed(1)} % <span class="maxScore">(±10%)</span></li>
+    <li>年間経済効果の評価: ${rec_E3.toFixed(1)} % <span class="maxScore">(±25%)</span></li>
+    <li>電気代削減割合の評価: ${rec_E4.toFixed(1)} % <span class="maxScore">(±25%)</span></li>
+  </ul>
+  <p><strong>【営業部コメント】</strong></p>
+<!-- 営業部コメント全体を囲むコンテナ -->
+<div class="sales-comments">
+  <!-- 営業担当１の吹き出し -->
+  <div class="sales-comment">
+    <div class="sales-icons">
+      <img src="sales_icon1.png" alt="営業担当1" class="sales-icon">
+    </div>
+    <div class="speech-bubble">
+      <p class="sales-explanation">
+        お勧め度は60%が平均的。80%を超えたらかなり良くて、100%オーバーは自信を持って提案できます！
+      </p>
+    </div>
+  </div>
+  
+  <!-- 営業担当２の吹き出し -->
+  <div class="sales-comment">
+    <div class="sales-icons">
+      <img src="sales_icon2.png" alt="営業担当2" class="sales-icon">
+    </div>
+    <div class="speech-bubble">
+      <p class="sales-comment-text">
+        ${salesComment}
+      </p>
+    </div>
+  </div>
+</div>
+
+`;
+
+  resultHTML += recommendationHTML;
+
+  document.getElementById("result").innerHTML = resultHTML;
 
   console.log("Detailed Simulation Data (Year 1):", baseResult);
   console.log("breakEvenYear:", breakEvenYear);
@@ -1038,3 +1239,213 @@ function calculate() {
   console.log("recommendedDegree:", recommendedDegree);
 }
 
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btnResult = document.getElementById("floatingScrollButton");
+  const btnEstimate = document.getElementById("floatingEstimateButton");
+  const sectionDetail = document.getElementById("section-detail");
+  const frameTarget = document.getElementById("section-home");
+
+  function checkVisibility() {
+    const resultTop = document.getElementById("result").getBoundingClientRect().top;
+    const homeTop = frameTarget.getBoundingClientRect().top;
+    const viewportHeight = window.innerHeight;
+
+    if (resultTop > 0 && resultTop < viewportHeight) {
+      btnResult.classList.add("hidden");
+      btnEstimate.classList.remove("hidden");
+    } else if (homeTop <= viewportHeight * 0.8) {
+      btnResult.classList.add("hidden");
+      btnEstimate.classList.add("hidden");
+    } else {
+      btnResult.classList.remove("hidden");
+      btnEstimate.classList.add("hidden");
+    }
+  }
+
+  btnResult?.addEventListener("click", () => {
+    sectionDetail?.scrollIntoView({ behavior: "smooth" });
+  });
+
+  btnEstimate?.addEventListener("click", () => {
+    frameTarget?.scrollIntoView({ behavior: "smooth" });
+  });
+
+  window.addEventListener("scroll", checkVisibility);
+  checkVisibility();
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  let lastShown = ""; // 現在表示中のボタンを追跡
+
+  const btnResult = document.getElementById("floatingScrollButton");
+  const btnEstimate = document.getElementById("floatingEstimateButton");
+  const sectionDetail = document.getElementById("section-detail");
+  const frameTarget = document.getElementById("frame-target");
+
+  function checkVisibility() {
+    const resultTop = document.getElementById("result").getBoundingClientRect().top;
+    const homeTop = frameTarget.getBoundingClientRect().top;
+    const viewportHeight = window.innerHeight;
+
+    if (resultTop > 0 && resultTop < viewportHeight) {
+      if (lastShown !== "estimate") {
+        btnResult.classList.add("hidden");
+        btnEstimate.classList.remove("hidden");
+        lastShown = "estimate";
+      }
+    } else if (homeTop <= viewportHeight * 0.8) {
+      if (lastShown !== "none") {
+        btnResult.classList.add("hidden");
+        btnEstimate.classList.add("hidden");
+        lastShown = "none";
+      }
+    } else {
+      if (lastShown !== "result") {
+        btnResult.classList.remove("hidden");
+        btnEstimate.classList.add("hidden");
+        lastShown = "result";
+      }
+    }
+  }
+
+  btnResult?.addEventListener("click", () => {
+    sectionDetail?.scrollIntoView({ behavior: "smooth" });
+  });
+
+  btnEstimate?.addEventListener("click", () => {
+    const rect = frameTarget.getBoundingClientRect();
+    const offset = window.scrollY + rect.top - 40;
+    window.scrollTo({ top: offset, behavior: "smooth" });
+  });
+
+  window.addEventListener("scroll", checkVisibility);
+  checkVisibility();
+});
+
+
+// ==== 結果セクション表示後のボタン切替 ====
+function showEstimateButtonAfterResult() {
+  const scrollBtn = document.getElementById("floatingScrollButton");
+  const estimateBtn = document.getElementById("floatingEstimateButton");
+  if (scrollBtn) scrollBtn.classList.add("hidden");
+  if (estimateBtn) estimateBtn.classList.remove("hidden");
+}
+// 結果が表示されたときにこの関数を呼び出してください（例：calculate後）
+
+// ✅ 正規の送信処理（貫通防止付き）送信処理（重複登録防止）
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("mainForm");
+  const submitBtn = document.getElementById("submitBtn");
+
+  if (!form || !submitBtn) return;
+
+  submitBtn.addEventListener("click", async (e) => {
+    e.preventDefault(); // デフォルトのフォーム送信を止める
+
+    if (!form.checkValidity()) {
+      form.reportValidity(); // バリデーションエラーを表示
+      return;
+    }
+
+    const payload = {
+      userName: document.getElementById("userName")?.value || "",
+      userAddress: document.getElementById("userAddress")?.value || "",
+      userPhone: document.getElementById("userPhone")?.value || "",
+      userEmail: document.getElementById("userEmail")?.value || "",
+      roofMaterial: document.getElementById("roofMaterial")?.value || "",
+      roofSlope: document.getElementById("roofSlope")?.value || "",
+      otherPanelPlace: document.getElementById("otherPanelPlace")?.value || "",
+      electricCompany: document.getElementById("electricCompany")?.value || "",
+      saltArea: document.querySelector('input[name="saltArea"]:checked')?.value || "",
+      competitorCount: document.getElementById("competitorCount")?.value || "",
+      estimateType: document.querySelector('input[name="estimateType"]:checked')?.value || "",
+      installTime: document.getElementById("installTime")?.value || "",
+      privacyAgreed: document.getElementById("privacyAgree")?.checked ? "同意済" : "",
+      timestamp: new Date().toLocaleString()
+    };
+
+    const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
+
+    try {
+      await fetch(endpoint, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams(payload).toString()
+      });
+      alert("送信完了しました！");
+    } catch (error) {
+      alert("送信中にエラーが発生しました。");
+      console.error("送信エラー:", error);
+    }
+  });
+});
+
+
+
+// ✅ 正規の送信処理（reCAPTCHA＋ハニーポット）
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("mainForm");
+  const submitBtn = document.getElementById("submitBtn");
+
+  if (!form || !submitBtn) return;
+
+  submitBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const honeypot = document.getElementById("honeypot");
+    if (honeypot && honeypot.value !== "") {
+      alert("スパムが検出されました。");
+      return;
+    }
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    grecaptcha.ready(async () => {
+      try {
+        const token = await grecaptcha.execute('6LcAiQgrAAAAABqJbHXcUAPtS51E4HVZjrq22Mve', { action: 'submit' });
+
+        const payload = {
+          userName: document.getElementById("userName")?.value || "",
+          userAddress: document.getElementById("userAddress")?.value || "",
+          userPhone: document.getElementById("userPhone")?.value || "",
+          userEmail: document.getElementById("userEmail")?.value || "",
+          roofMaterial: document.getElementById("roofMaterial")?.value || "",
+          roofSlope: document.getElementById("roofSlope")?.value || "",
+          otherPanelPlace: document.getElementById("otherPanelPlace")?.value || "",
+          electricCompany: document.getElementById("electricCompany")?.value || "",
+          saltArea: document.querySelector('input[name="saltArea"]:checked')?.value || "",
+          competitorCount: document.getElementById("competitorCount")?.value || "",
+          estimateType: document.querySelector('input[name="estimateType"]:checked')?.value || "",
+          installTime: document.getElementById("installTime")?.value || "",
+          privacyAgreed: document.getElementById("privacyAgree")?.checked ? "同意済" : "",
+          timestamp: new Date().toLocaleString(),
+          recaptchaToken: token
+        };
+
+        const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
+
+        await fetch(endpoint, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams(payload).toString()
+        });
+
+        alert("送信完了しました！");
+      } catch (error) {
+        alert("送信中にエラーが発生しました。");
+        console.error("送信エラー:", error);
+      }
+    });
+  });
+});
