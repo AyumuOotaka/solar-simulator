@@ -3,20 +3,16 @@ body {
   background-color: #fffbf5;
   margin: 0;
   padding: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   min-height: 100vh;
 }
 
 .frame-container {
-  background-color: #ffffff;
-  padding: 20px;
-  border: 1px solid #ddd;
+  background-color: #fff;
+  max-width: 960px;
+  margin: 40px auto;
+  padding: 30px 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 900px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 h2 {
@@ -24,7 +20,10 @@ h2 {
   margin-bottom: 20px;
 }
 
-/* セクション・見出し */
+#graphTitle {
+  text-align: center;
+}
+
 .form-section {
   border: 1px solid #ccc;
   background-color: #f9f9f9;
@@ -37,61 +36,51 @@ h2 {
 .centered-title {
   text-align: center;
   margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
 }
 
 .section-header {
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
-/* 見出しの右にチェックボックス (広い画面時) */
 .header-checkbox-right {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* 狭い画面なら下段に回り込む */
-@media screen and (max-width: 600px) {
-  .header-checkbox-right {
-    position: static;
-    transform: none;
-    margin-top: 10px;
-    display: block;
-    text-align: center; 
-  }
-}
-
-/* 小さいチェックボックスラベル */
-.small-check-label {
+  margin-left: auto;
   font-size: 0.85rem;
   opacity: 0.9;
 }
 
-.input-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
+@media screen and (max-width: 600px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .header-checkbox-right {
+    margin-top: 10px;
+    text-align: left;
+  }
 }
 
-/* 入力行はデフォルトで flex; 2列に */
 .input-row {
   display: flex;
-  flex-wrap: nowrap; /* 折り返さず2列を維持 */
+  flex-wrap: wrap;
   gap: 20px;
   width: 100%;
   margin-bottom: 15px;
 }
 
 .input-item {
-  flex: 1;
+  flex: 1 1 45%;
   display: flex;
   flex-direction: column;
   padding: 0 10px;
   margin-bottom: 10px;
+  position: relative;
 }
 
 input, select {
@@ -103,7 +92,77 @@ input, select {
   font-size: 16px;
 }
 
-/* チェックボックス */
+input:invalid {
+  border-color: #e74c3c;
+  background-color: #fff5f5;
+}
+
+input:invalid::placeholder {
+  color: #e74c3c;
+  opacity: 0.7;
+}
+
+.input-item label::after {
+  content: " *";
+  color: red;
+  font-weight: bold;
+}
+
+/* 入力制限ルール */
+input#monthlyUsageMax,
+input#monthlyUsageMin {
+  min: 0;
+  max: 9999;
+  required: true;
+}
+
+input#monthlyCostMax,
+input#monthlyCostMin {
+  min: 0;
+  max: 999999;
+  required: true;
+}
+
+input#batteryOtherCapacity {
+  min: 0.0;
+  max: 50;
+  step: 0.1;
+}
+
+input#batteryOtherCost {
+  min: 0;
+  max: 99999999;
+}
+
+input#userName {
+  pattern: "^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u30FB\uFF65\uFF1D\uFF3D\u30FC\uFF70\u309D]+$";
+  required: true;
+}
+
+input#userAddress {
+  pattern: "^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u30FB\uFF65\uFF1D\uFF3D\u30FC\uFF70\u309D\u0020\u3000\u002C\u3001\u3002\u0030-\u0039]+$";
+  required: true;
+}
+
+input#roofMaterial {
+  pattern: "^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\d]+$";
+}
+
+input#roofSlope {
+  min: 0;
+  max: 10;
+  step: 0.1;
+}
+
+input#otherPanelPlace,
+input#electricCompany {
+  pattern: "^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\d\u30FB\uFF65\uFF1D\uFF3D\u30FC\uFF70\u309D\u0020\u3000\u002C\u3001\u3002\u002F\uFF0F]+$";
+}
+
+input#privacyAgree {
+  required: true;
+}
+
 .checkbox-label {
   display: inline-flex;
   align-items: center;
@@ -113,39 +172,238 @@ input, select {
   text-align: left;
 }
 
-/* 蓄電池「その他」入力欄の余白 */
 .battery-other-container {
   margin-right: 20px;
 }
 
-/* 結果表示エリア */
 #result {
-  width: 100%;
-  background: #FFF3E0;
+  background-color: #fff1e6;
   padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-top: 30px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+
+.sales-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 95%;
+  margin: 0 auto;
+}
+
+.sales-comment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 98%;
+  margin: 0 auto;
+}
+
+.sales-icons {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.sales-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+} 
+
+.speech-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.speech-bubble {
+  position: relative;
+  background: #fff;
+  border: 2px solid #d88c4b;
+  color: #333;
   border-radius: 10px;
-  margin-bottom: 20px;
-  box-sizing: border-box;
-  overflow: hidden;
+  padding: 15px 20px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  flex: 1;
 }
 
-/* グラフ */
-canvas {
-  width: 100%;
-  margin-bottom: 20px;
+.speech-bubble::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: -20px;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-right-color: #fff;
+  border-left: 0;
+  filter: drop-shadow(2px 0 2px rgba(0, 0, 0, 0.1));
 }
 
-/* デバッグ情報（削除・またはコメントアウト）
-.debug-info {
-  margin-top: 10px;
-  font-size: 14px;
+.sales-explanation {
+  font-size: 0.9rem;
+  margin: 0 0 5px;
+  color: #333;
+}
+
+.sales-comment-text {
+  margin: 0;
   color: #555;
-  white-space: pre-wrap;
 }
-*/
 
-/* 統一されたエラーメッセージ */
 .error-message {
   color: red;
   font-weight: bold;
+}
+
+.maxScore {
+  font-size: 0.85em;
+  color: #888;
+}
+
+
+.floating-scroll-button,
+.floating-estimate-button {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  border-radius: 30px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  z-index: 1000;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.floating-scroll-button {
+  background-color: #ffc107;
+}
+
+.floating-scroll-button:hover {
+  background-color: #e0a800;
+}
+
+.floating-estimate-button {
+  background-color: #dc3545;
+}
+
+.floating-estimate-button:hover {
+  background-color: #bd2130;
+}
+
+.floating-scroll-button.hidden,
+.floating-estimate-button.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+/* 取得したいお見積り内容のラジオボタン整列 */
+.radio-group-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.radio-group-horizontal label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.radio-group-horizontal label:hover {
+  background-color: #e9ecef;
+}
+
+
+/* ラジオボタンのラベルには必須マークを表示しない */
+.radio-group-vertical label::after {
+  content: none !important;
+}
+
+
+/* ラジオボタンのバランス調整（ボタンを左に） */
+.radio-group-vertical label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.radio-group-vertical input[type="radio"] {
+  margin: 0;
+}
+
+
+/* ラジオボタングループの整列と改行防止 */
+.radio-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.radio-group-vertical label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+
+/* 必須マークを除外するためのクラス指定 */
+label.no-required::after {
+  content: none !important;
+}
+
+
+/* プライバシーポリシーのラベル整列と必須マーク位置 */
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.required {
+  color: red;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.privacy-row {
+  justify-content: center;
+  gap: 12px;
+}
+
+
+.input-row.privacy-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
