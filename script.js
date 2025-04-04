@@ -1334,59 +1334,6 @@ function showEstimateButtonAfterResult() {
 }
 // 結果が表示されたときにこの関数を呼び出してください（例：calculate後）
 
-// ✅ 正規の送信処理（貫通防止付き）送信処理（重複登録防止）
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("mainForm");
-  const submitBtn = document.getElementById("submitBtn");
-
-  if (!form || !submitBtn) return;
-
-  submitBtn.addEventListener("click", async (e) => {
-    e.preventDefault(); // デフォルトのフォーム送信を止める
-
-    if (!form.checkValidity()) {
-      form.reportValidity(); // バリデーションエラーを表示
-      return;
-    }
-
-    const payload = {
-      userName: document.getElementById("userName")?.value || "",
-      userAddress: document.getElementById("userAddress")?.value || "",
-      userPhone: document.getElementById("userPhone")?.value || "",
-      userEmail: document.getElementById("userEmail")?.value || "",
-      roofMaterial: document.getElementById("roofMaterial")?.value || "",
-      roofSlope: document.getElementById("roofSlope")?.value || "",
-      otherPanelPlace: document.getElementById("otherPanelPlace")?.value || "",
-      electricCompany: document.getElementById("electricCompany")?.value || "",
-      saltArea: document.querySelector('input[name="saltArea"]:checked')?.value || "",
-      competitorCount: document.getElementById("competitorCount")?.value || "",
-      estimateType: document.querySelector('input[name="estimateType"]:checked')?.value || "",
-      installTime: document.getElementById("installTime")?.value || "",
-      privacyAgreed: document.getElementById("privacyAgree")?.checked ? "同意済" : "",
-      timestamp: new Date().toLocaleString()
-    };
-
-    const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
-
-    try {
-      await fetch(endpoint, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams(payload).toString()
-      });
-      alert("送信完了しました！");
-    } catch (error) {
-      alert("送信中にエラーが発生しました。");
-      console.error("送信エラー:", error);
-    }
-  });
-});
-
-
-
 // ✅ 正規の送信処理（reCAPTCHA＋ハニーポット）
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("mainForm");
@@ -1431,6 +1378,8 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
+
+console.log("送信するpayloadの中身：", payload);
 
         await fetch(endpoint, {
           method: "POST",
