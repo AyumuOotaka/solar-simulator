@@ -22,11 +22,9 @@ input#privacyAgree:required + label::after {
 <script src="https://www.google.com/recaptcha/api.js?render=6LcAiQgrAAAAABqJbHXcUAPtS51E4HVZjrq22Mve"></script>
 </head>
 <body><form id="mainForm">
-
 <div style="display:none;">
-  <input type="text" id="honeypot" name="honeypot" autocomplete="off" />
+<input autocomplete="off" id="honeypot" name="honeypot" type="text"/>
 </div>
-
 <!-- フォーム１：入力フォーム、システム設定、蓄電池設定、詳細情報（グラフ） -->
 <div class="frame-container">
 <h2>太陽光発電シミュレーター</h2>
@@ -43,40 +41,41 @@ input#privacyAgree:required + label::after {
 <div class="input-item">
 <p class="error-message" id="usageRangeError"></p>
 <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
-<input id="monthlyUsageMax" max="9999" min="0" required="" type="number" value="650"/>
+<input id="monthlyUsageMax" max="9999" min="0" placeholder="例: 700" required="" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 <div class="input-item">
 <p class="error-message" id="usageRangeError"></p>
 <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
-<input id="monthlyUsageMin" max="9999" min="0" required="" type="number" value="400"/>
+<input id="monthlyUsageMin" max="9999" min="0" placeholder="例: 300" required="" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 </div>
 <div class="input-row" id="costInputContainer" style="display: none;">
 <div class="input-item">
 <p class="error-message" id="costRangeError"></p>
 <label for="monthlyCostMax">月最高電気代金 (円):</label>
-<input id="monthlyCostMax" max="999999" min="0" required="" type="number" value="0"/>
+<input id="monthlyCostMax" max="999999" min="0" placeholder="例: 18000" required="" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 <div class="input-item">
 <p class="error-message" id="costRangeError"></p>
 <label for="monthlyCostMin">月最低電気代金 (円):</label>
-<input id="monthlyCostMin" max="999999" min="0" required="" type="number" value="0"/>
+<input id="monthlyCostMin" max="999999" min="0" placeholder="例: 9000" required="" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 </div>
 <div class="input-row">
-<div class="input-item">
-<label for="daytimeDays">日中在宅日数 (0〜7):</label>
-<select id="daytimeDays">
+  <div class="input-item">
+    <label for="daytimeDays">週に何日、日中在宅していますか？</label>
+    <select id="daytimeDays" name="daytimeDays" required="">
+    <option value="">未選択</option>
 <option value="0">0日</option>
 <option value="1">1日</option>
-<option selected="" value="2">2日</option>
+<option value="2">2日</option>
 <option value="3">3日</option>
 <option value="4">4日</option>
 <option value="5">5日</option>
 <option value="6">6日</option>
 <option value="7">7日</option>
 </select>
-</div>
+    </div>
 </div>
 </div>
 <!-- フォーム１ セクション2：システム設定 -->
@@ -91,7 +90,7 @@ input#privacyAgree:required + label::after {
 <div class="input-row">
 <div class="input-item">
 <label for="panelOutput">太陽光パネルの額面出力 (kW) ※1kW〜25kW限定:</label>
-<input id="panelOutput" max="25" min="1" step="0.1" type="number" value="5.0"/>
+<input id="panelOutput" placeholder="例: 4.52" step="0.01" required="" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 <div class="input-item" id="solarYearContainer" style="display: none;">
 <label for="solarYear">太陽光施工年:</label>
@@ -132,16 +131,18 @@ input#privacyAgree:required + label::after {
 </div>
 <div class="input-item battery-other-container" id="batteryOtherContainer" style="display: none;">
 <label for="batteryOtherCapacity">蓄電池容量 (kWh):</label>
-<input id="batteryOtherCapacity" max="50" min="0" placeholder="例: 8.0" step="0.1" type="number"/>
+<input id="batteryOtherCapacity" max="50" min="0" placeholder="例: 6.5" step="0.1" style="; background-color: white; color: #666666;" type="text"/>
 <br/>
 <label for="batteryOtherCost">蓄電池費用 (円):</label>
-<input id="batteryOtherCost" max="99999999" min="0" placeholder="例: 120000" step="1" type="number"/>
+<input id="batteryOtherCost" max="99999999" min="0" placeholder="例: 1100000" step="1" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 </div>
 </div>
 <!-- フォーム１ セクション4：詳細情報（結果表示＆グラフ） -->
 <div class="form-section" id="section-detail">
-<div id="result"></div>
+<div id="result"></div>    
+</div>
+
 <h3 id="graphTitle">経済効果（節電金額＋売電金額 の累積 vs 設備導入費用）</h3>
 <canvas id="economicEffectChart"></canvas>
 </div>
@@ -153,20 +154,20 @@ input#privacyAgree:required + label::after {
 <h3 class="centered-title">個人情報</h3>
 <div class="input-row">
 <div class="input-item">
-<label for="userName">お名前: *</label>
-<input id="userName" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u30FB\uFF65\uFF1D\uFF3D\u30FC\uFF70\u309D]+$" required="" type="text"/>
+<label for="userName">お名前:</label>
+<input id="userName" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u30FB\uFF65\uFF1D\uFF3D\u30FC\uFF70\u309D]+$" placeholder="例: オフグリ 太郎" required="" style="; background-color: white; color: #666666;" type="text"/>
 </div>
 <div class="input-item">
-<label for="userAddress">ご住所: *</label>
-<input id="userAddress" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9\u30FB\uFF65\uFF1D\uFF3D\u30FC\uFF70\u309D\s\u3000\u002C\u3001\u3002]+$" required="" type="text"/>
+<label for="userAddress">ご住所:</label>
+<input id="userAddress" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9\u30FB\uFF65\uFF1D\uFF3D\u30FC\uFF70\u309D\s\u3000\u002C\u3001\u3002]+$" placeholder="例: 茨城県日立市多賀町1-14-4" required="" style="; background-color: white; color: #666666;" type="text"/>
 </div>
 <div class="input-item">
-<label for="userEmail">メールアドレス<span style="color: red;"> *</span></label>
-<input id="userEmail" name="userEmail" placeholder="sample@example.com" required="" type="email"/>
+<label for="userEmail">メールアドレス:</label>
+<input id="userEmail" name="userEmail" placeholder="例: OFFGRI.TAROU@xxx.com" required="" style="; background-color: white; color: #666666;" type="email"/>
 </div>
 <div class="input-item">
-<label for="userPhone">電話番号<span style="color: red;"> *</span></label>
-<input id="userPhone" name="userPhone" placeholder="090-1234-5678" required="" type="tel"/>
+<label for="userPhone">電話番号:</span></label>
+<input id="userPhone" name="userPhone" placeholder="例: 0294-59-3838" required="" style="; background-color: white; color: #666666;" type="tel"/>
 </div>
 </div>
 </div>
@@ -176,15 +177,16 @@ input#privacyAgree:required + label::after {
 <div class="input-row">
 <div class="input-item">
 <label class="no-required" for="roofMaterial">屋根の素材:</label>
-<input id="roofMaterial" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9a-zA-Z\-\.,\/\s]+$" type="text"/>
+<input id="roofMaterial" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9a-zA-Z\-\.,\/\s]+$" placeholder="例: 瓦 / スレート" style="; background-color: white; color: #666666;" type="text"/>
 </div>
 <div class="input-item">
 <label class="no-required" for="roofSlope">屋根の傾斜（寸）:</label>
-<input id="roofSlope" max="10" min="0" step="0.1" type="number"/>
+<input id="roofSlope" max="10" min="0" placeholder="例: 3" step="0.1" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 <div class="input-item">
-<label for="saltArea">塩害地域ですか？<span style="color: red;"> *</span></label>
+<label for="saltArea">塩害地域ですか？</label>
 <select id="saltArea" name="saltArea" required="">
+<span id="saltAreaNote" style="color: red; margin-left: 10px;"></span>
 <option value="">未選択</option>
 <option value="重塩害地域(500m以下)">重塩害地域(500m以下)</option>
 <option value="塩害地域(2km以下)">塩害地域(2km以下)</option>
@@ -195,11 +197,11 @@ input#privacyAgree:required + label::after {
 <div class="input-row">
 <div class="input-item">
 <label class="no-required" for="otherPanelPlace">屋根以外のパネル設置場所:</label>
-<input id="otherPanelPlace" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9a-zA-Z\-\.,\/\s]+$" type="text"/>
+<input id="otherPanelPlace" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9a-zA-Z\-\.,\/\s]+$" placeholder="例: カーポート / 庭" style="; background-color: white; color: #666666;" type="text"/>
 </div>
 <div class="input-item">
 <label class="no-required" for="electricCompany">電力会社・プラン:</label>
-<input id="electricCompany" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9a-zA-Z\-\.,\/\s]+$" type="text"/>
+<input id="electricCompany" pattern="^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF0-9a-zA-Z\-\.,\/\s]+$" placeholder="例: 東京電力 従量電灯B" style="; background-color: white; color: #666666;" type="text"/>
 </div>
 </div>
 </div>
@@ -209,13 +211,13 @@ input#privacyAgree:required + label::after {
 <div class="input-row">
 <div class="input-item">
 <label for="competitorCount">他社お見積り件数:</label>
-<input id="competitorCount" min="0" required="" type="number"/>
+<input id="competitorCount" min="0" placeholder="例: 3" required="" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 <div class="input-item">
 <label>取得したいお見積り内容:</label>
 <div class="radio-group-vertical"><label><input name="estimateType" required="" type="radio" value="太陽光パネル"/> 太陽光パネル</label><label><input name="estimateType" type="radio" value="蓄電池/バッテリー"/> 蓄電池/バッテリー</label><label><input name="estimateType" type="radio" value="その他商品"/> その他商品</label><label><input name="estimateType" type="radio" value="まだ決まっていない(相談したい等)"/> まだ決まっていない(相談したい等)</label></div></div>
 <div class="input-item">
-<label for="installTime">導入予定時期<span style="color: red;"> *</span></label>
+<label for="installTime">導入予定時期: </span></label>
 <select id="installTime" name="installTime" required="">
 <option value="">選択してください</option>
 <option value="3ヵ月以内">3ヵ月以内</option>
@@ -261,5 +263,15 @@ input#privacyAgree:required + label::after {
       }
     });
   </script>
-<button class="floating-scroll-button" id="floatingScrollButton">💡結果を確認💡</button><button class="floating-estimate-button hidden" id="floatingEstimateButton">🔥見積もりを依頼🔥</button></form></body>
+<button class="floating-scroll-button" id="floatingScrollButton">💡結果を確認💡</button><button class="floating-estimate-button hidden" id="floatingEstimateButton">🔥見積もりを依頼🔥</button></form><script>
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll("input[type=text], input[type=number], input[type=email], input[type=tel]").forEach(function(input) {
+    input.addEventListener("input", function() {
+      if (input.value !== "") {
+        input.style.color = "#000000";
+      }
+    });
+  });
+});
+</script></body>
 </html>

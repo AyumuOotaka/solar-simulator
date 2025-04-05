@@ -31,6 +31,25 @@ const FIT_RATES = [
   { "Year": 2025, "Under10": 15, "Over10": 10 }
 ];
 
+document.addEventListener("DOMContentLoaded", function () {
+  const saltAreaRadios = document.querySelectorAll('input[name="saltArea"]');
+  const saltAreaNote = document.getElementById("saltAreaNote");
+
+  if (!saltAreaRadios || !saltAreaNote) return;
+
+  saltAreaRadios.forEach((radio) => {
+    radio.addEventListener("change", function () {
+      if (radio.checked && radio.value.includes("重塩害")) {
+        saltAreaNote.textContent = "※場合によっては設置が出来ない事もございます。";
+      } else {
+        saltAreaNote.textContent = "";
+      }
+    });
+  });
+});
+
+
+
 // ========================
 // 設定項目（税金や税込み処理はなし。額面通りの値を使用）
 // ========================
@@ -1034,42 +1053,42 @@ if (solarInstalled && batteryCapacity > 0) {
 }
 
   // 11) 詳細シミュレーション結果の表示（1年目の値を使用）
-  let resultHTML = `<h3>詳細シミュレーション結果</h3>
-    <table border="1" cellspacing="0" cellpadding="5">
-      <tr>
-        <th>項目</th>
-        <th>金額 (円)</th>
-      </tr>
-      <tr>
-        <td>年間電気使用量</td>
-        <td>${annualUsage.toLocaleString()} kWh</td>
-      </tr>
-      <tr>
-        <td>太陽光なしの年間電気料金</td>
-        <td>${baseResult.noSolarAnnualCost.toLocaleString()} 円</td>
-      </tr>
-      <tr>
-        <td>太陽光ありの年間電気料金</td>
-        <td>${baseResult.solarAnnualCost.toLocaleString()} 円</td>
-      </tr>
-      <tr>
-        <td>節電金額</td>
-        <td>${detailedSavings.toLocaleString()} 円</td>
-      </tr>
-      <tr>
-        <td>年間売電量</td>
-        <td>${baseResult.annualSellEnergy.toLocaleString()} kWh</td>
-      </tr>
-      <tr>
-        <td>年間売電金額</td>
-        <td>${simulationData.yearlySellIncome[0].toLocaleString()} 円</td>
-      </tr>
-      <tr>
-        <td>設備導入費用</td>
-        <td>${computedEquipmentCost.toLocaleString()} 円</td>
-      </tr>
-    </table>
-    <p>${(computedEquipmentCost > 0) ? ("設備導入費用: " + computedEquipmentCost.toLocaleString() + " 円") : ""}</p>`;
+  let resultHTML = `<h3>詳細シミュレーション結果</h3>`;
+
+  
+  resultHTML += `
+    <div id="summaryView" class="simulation-summary">
+        <div class="highlight-line large-highlight">
+          <span class="label">📌 元が取れる年数</span>
+          <span class="value" id="paybackYears">- 年</span>
+        </div>
+        <div class="highlight-line large-highlight">
+          <span class="label">🟢 おすすめ度</span>
+          <span class="value" id="recommendPercent">- %</span>
+        </div>
+      <div class="section-block">
+        <h4>【電気料金の比較】</h4>
+        <ul>
+          <li>🟥 太陽光なしの年間電気料金　：<span id="electricNoSolar">- 円</span></li>
+          <li>🟩 太陽光ありの年間電気料金　：<span id="electricWithSolar">- 円</span></li>
+          <li>💰 節電金額　　　　　　　　　：<span id="savingAmount">- 円</span></li>
+        </ul>
+      </div>
+      <div class="section-block">
+        <h4>【売電情報】</h4>
+        <ul>
+          <li>🔋 年間売電金額　　　　 　　：<span id="sellIncome">- 円</span></li>
+        </ul>
+      </div>
+      <div class="section-block">
+        <h4>【設備投資】</h4>
+        <ul>
+          <li>🏗️ 導入費用　　　　　　　　：<span id="equipmentCost">- 万円</span></li>
+          <li>📈 回収年数　　　　　　　　：<span id="paybackYears2">- 年</span></li>
+        </ul>
+      </div>
+    </div>
+  `;
 
   // 回収期間の算出（従来のロジック）
   let breakEvenYear = null;
@@ -1104,7 +1123,6 @@ if (solarInstalled && batteryCapacity > 0) {
   const breakEvenText = (breakEvenYear)
     ? `元が取れる年数: <strong>${breakEvenYear} 年</strong>`
     : `20年以内に元が取れません`;
-  resultHTML += `<p>${breakEvenText}</p>`;
 
   // ----- お勧め度評価（従来の評価ロジック） -----
   let batteryInstalledFlag = (batteryCapacity > 0);
@@ -1233,6 +1251,45 @@ let recommendationHTML = `
 
   document.getElementById("result").innerHTML = resultHTML;
 
+  try {
+    const summaryValues = {
+      paybackYears: breakEvenYear + "年",
+      paybackYears2: breakEvenYear + "年",
+      recommendPercent: Math.round(recommendedDegree) + "%",
+      electricNoSolar: baseResult.noSolarAnnualCost.toLocaleString() + " 円",
+      electricWithSolar: baseResult.solarAnnualCost.toLocaleString() + " 円",
+      savingAmount: detailedSavings.toLocaleString() + " 円",
+      sellIncome: simulationData.yearlySellIncome[0].toLocaleString() + " 円",
+      equipmentCost: Math.round(computedEquipmentCost / 1000) / 10 + " 万円"
+    };
+    for (const id in summaryValues) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = summaryValues[id];
+    }
+  } catch (e) {
+    console.error("summaryViewの代入エラー:", e);
+  }
+
+  try {
+    const summaryValues = {
+      paybackYears: breakEvenYear + "年",
+      paybackYears2: breakEvenYear + "年",
+      recommendPercent: Math.round(recommendedDegree) + "%",
+      electricNoSolar: baseResult.noSolarAnnualCost.toLocaleString() + " 円",
+      electricWithSolar: baseResult.solarAnnualCost.toLocaleString() + " 円",
+      savingAmount: detailedSavings.toLocaleString() + " 円",
+      sellIncome: simulationData.yearlySellIncome[0].toLocaleString() + " 円",
+      equipmentCost: Math.round(computedEquipmentCost / 1000) / 10 + " 万円"
+    };
+    for (const id in summaryValues) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = summaryValues[id];
+    }
+  } catch (e) {
+    console.error("summaryView代入エラー:", e);
+  }
+
+
   console.log("Detailed Simulation Data (Year 1):", baseResult);
   console.log("breakEvenYear:", breakEvenYear);
   console.log("rec_E1:", rec_E1, " rec_E2:", rec_E2, " rec_E3:", rec_E3, " rec_E4:", rec_E4);
@@ -1359,23 +1416,56 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const token = await grecaptcha.execute('6LcAiQgrAAAAABqJbHXcUAPtS51E4HVZjrq22Mve', { action: 'submit' });
 
-        const payload = {
-          userName: document.getElementById("userName")?.value || "",
-          userAddress: document.getElementById("userAddress")?.value || "",
-          userPhone: document.getElementById("userPhone")?.value || "",
-          userEmail: document.getElementById("userEmail")?.value || "",
-          roofMaterial: document.getElementById("roofMaterial")?.value || "",
-          roofSlope: document.getElementById("roofSlope")?.value || "",
-          otherPanelPlace: document.getElementById("otherPanelPlace")?.value || "",
-          electricCompany: document.getElementById("electricCompany")?.value || "",
-          saltArea: document.querySelector('input[name="saltArea"]:checked')?.value || "",
-          competitorCount: document.getElementById("competitorCount")?.value || "",
-          estimateType: document.querySelector('input[name="estimateType"]:checked')?.value || "",
-          installTime: document.getElementById("installTime")?.value || "",
-          privacyAgreed: document.getElementById("privacyAgree")?.checked ? "同意済" : "",
-          timestamp: new Date().toLocaleString(),
-          recaptchaToken: token
-        };
+
+
+        // フォーム送信処理
+        await fetch(form.action, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams(new FormData(form)),
+        });
+const costInputCheckedRaw = document.getElementById("costInputCheckbox")?.checked || false;
+const solarInstalledRaw = document.getElementById("solarInstalled")?.checked || false;
+
+const costInputChecked = costInputCheckedRaw ? "True" : "False";
+const solarInstalled = solarInstalledRaw ? "True" : "False";
+
+const monthlyUsageMax = costInputChecked === "True" ? "" : document.getElementById("monthlyUsageMax")?.value || "";
+const monthlyUsageMin = costInputChecked === "True" ? "" : document.getElementById("monthlyUsageMin")?.value || "";
+const monthlyCostMax = costInputChecked === "False" ? "" : document.getElementById("monthlyCostMax")?.value || "";
+const monthlyCostMin = costInputChecked === "False" ? "" : document.getElementById("monthlyCostMin")?.value || "";
+
+const payload = {
+  userName: document.getElementById("userName")?.value || "",
+  userAddress: document.getElementById("userAddress")?.value || "",
+  userPhone: document.getElementById("userPhone")?.value || "",
+  userEmail: document.getElementById("userEmail")?.value || "",
+  roofMaterial: document.getElementById("roofMaterial")?.value || "",
+  roofSlope: document.getElementById("roofSlope")?.value || "",
+  otherPanelPlace: document.getElementById("otherPanelPlace")?.value || "",
+  electricCompany: document.getElementById("electricCompany")?.value || "",
+  saltArea: document.querySelector('input[name="saltArea"]:checked')?.value || "",
+  competitorCount: document.getElementById("competitorCount")?.value || "",
+  estimateType: document.querySelector('input[name="estimateType"]:checked')?.value || "",
+  installTime: document.getElementById("installTime")?.value || "",
+  costInputChecked: costInputChecked,
+  solarInstalled: solarInstalled,
+  panelOutput: document.getElementById("panelOutput")?.value || "",
+  daytimeDays: document.getElementById("daytimeDays")?.value || "",
+  monthlyUsageMax: monthlyUsageMax,
+  monthlyUsageMin: monthlyUsageMin,
+  monthlyCostMax: monthlyCostMax,
+  monthlyCostMin: monthlyCostMin,
+  battery: document.getElementById("battery")?.value || "",
+  batteryOtherCapacity: document.getElementById("batteryOtherCapacity")?.value || "",
+  batteryOtherCost: document.getElementById("batteryOtherCost")?.value || "",
+  privacyAgreed: document.getElementById("privacyAgree")?.checked ? "同意済" : "",
+  timestamp: new Date().toLocaleString(),
+  recaptchaToken: token
+};
+
 
         const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
 
@@ -1394,6 +1484,7 @@ console.log("送信するpayloadの中身：", payload);
       } catch (error) {
         alert("送信中にエラーが発生しました。");
         console.error("送信エラー:", error);
+
       }
     });
   });
