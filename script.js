@@ -709,7 +709,7 @@ function verifyRulesCompleteness(rules) {
   if (uncovered.length > 0) {
     console.warn("以下の評価組み合わせ (G, N, B, W の数) がルールで網羅されていません:", uncovered);
   } else {
-    console.log("すべての評価組み合わせがルールで網羅されています。");
+    //console.log("すべての評価組み合わせがルールで網羅されています。");
   }
 }
 
@@ -1113,12 +1113,14 @@ if (solarInstalled && batteryCapacity > 0) {
       }
     }
     // デバッグ情報の追加（このブロック内なら resultNoBattery は定義済み）
+    /* debugInfoで蓄電池のデバッグ出力。
     resultHTML += `<div id="debugInfo" style="margin-top:20px; padding:10px; background:#eef; border:1px solid #99c;">
       <h3>デバッグ情報 (蓄電池追加時)</h3>
       <pre>resultNoBattery: ${JSON.stringify(resultNoBattery, null, 2)}</pre>
       <pre>baseResult: ${JSON.stringify(baseResult, null, 2)}</pre>
       <pre>batteryEffect: ${batteryEffect}</pre>
     </div>`;
+    */
   }
   const breakEvenText = (breakEvenYear)
     ? `元が取れる年数: <strong>${breakEvenYear} 年</strong>`
@@ -1187,10 +1189,12 @@ const rec_E3 = rec_E3_legacy_scaled + rec_E3_ratio_scaled;
 // ---------------------------
 // ✅ デバッグ出力
 // ---------------------------
+/* E3のデバッグ出力
 console.log("【E3デバッグ】");
 console.log("経験値ベース (E3 legacy):", rec_E3_legacy_scaled.toFixed(2), "/10");
 console.log("電気代カバー率ベース (E3 ratio):", rec_E3_ratio_scaled.toFixed(2), "/15");
 console.log("最終合計スコア (rec_E3):", rec_E3.toFixed(2), "/25");
+*/
 
   const basicFee = (annualUsage < 4200) ? 1558.75 * 12 : 1870.50 * 12;
   let preElectricity = baseResult.noSolarAnnualCost - basicFee;
@@ -1289,13 +1293,13 @@ let recommendationHTML = `
     console.error("summaryView代入エラー:", e);
   }
 
-
+/* rec_E(x)のデバッグ
   console.log("Detailed Simulation Data (Year 1):", baseResult);
   console.log("breakEvenYear:", breakEvenYear);
   console.log("rec_E1:", rec_E1, " rec_E2:", rec_E2, " rec_E3:", rec_E3, " rec_E4:", rec_E4);
   console.log("recommendedDegree:", recommendedDegree);
 }
-
+*/
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnResult = document.getElementById("floatingScrollButton");
@@ -1416,16 +1420,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const token = await grecaptcha.execute('6LcAiQgrAAAAABqJbHXcUAPtS51E4HVZjrq22Mve', { action: 'submit' });
 
-
-
-        // フォーム送信処理
-        await fetch(form.action, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams(new FormData(form)),
-        });
 const costInputCheckedRaw = document.getElementById("costInputCheckbox")?.checked || false;
 const solarInstalledRaw = document.getElementById("solarInstalled")?.checked || false;
 
@@ -1469,7 +1463,9 @@ const payload = {
 
         const endpoint = "https://script.google.com/macros/s/AKfycbyIB3dD4YGsu9TgENKkMwG_u8m6msX0lxL61cn_z1hNziC2trOYQIUQzEiBTNAA3rzX/exec";
 
-console.log("送信するpayloadの中身：", payload);
+
+        // デバッグ情報
+        //console.log("送信するpayloadの中身：", payload);
 
         await fetch(endpoint, {
           method: "POST",
@@ -1489,3 +1485,45 @@ console.log("送信するpayloadの中身：", payload);
     });
   });
 });
+
+// --- フォーム送信イベント処理 ---
+const form = document.getElementById("mainForm");
+const submitBtn = document.getElementById("submitBtn");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const honeypot = document.getElementById("honeypot");
+  if (honeypot && honeypot.value !== "") {
+    alert("スパムが検出されました。");
+    return;
+  }
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  submitBtn.disabled = true;
+  setTimeout(() => submitBtn.disabled = false, 30000);
+
+  grecaptcha.ready(async () => {
+    try {
+      const token = await grecaptcha.execute('your-site-key', { action: 'submit' });
+
+      await fetch(form.action, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(new FormData(form)),
+      });
+
+      alert("送信が完了しました！");
+    } catch (err) {
+      alert("送信に失敗しました");
+      console.error(err);
+    }
+  });
+});
+}
