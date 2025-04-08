@@ -41,24 +41,24 @@ input#privacyAgree:required + label::after {
 <div class="input-item">
 <p class="error-message" id="usageRangeError"></p>
 <label for="monthlyUsageMax">月最高使用電気量 (kWh):</label>
-<input id="monthlyUsageMax" max="9999" min="0" placeholder="例: 700" required="" style="; background-color: white; color: #666666;" type="number"/>
+<input id="monthlyUsageMax" name="monthlyUsageMax" max="9999" min="0" placeholder="例: 700" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 <div class="input-item">
 <p class="error-message" id="usageRangeError"></p>
 <label for="monthlyUsageMin">月最低使用電気量 (kWh):</label>
-<input id="monthlyUsageMin" max="9999" min="0" placeholder="例: 300" required="" style="; background-color: white; color: #666666;" type="number"/>
+<input id="monthlyUsageMin" name="monthlyUsageMin" max="9999" min="0" placeholder="例: 300" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 </div>
 <div class="input-row" id="costInputContainer" style="display: none;">
 <div class="input-item">
 <p class="error-message" id="costRangeError"></p>
 <label for="monthlyCostMax">月最高電気代金 (円):</label>
-<input id="monthlyCostMax" max="999999" min="0" placeholder="例: 18000" required="" style="; background-color: white; color: #666666;" type="number"/>
+<input id="monthlyCostMax" name="monthlyCostMax" max="999999" min="0" placeholder="例: 18000" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 <div class="input-item">
 <p class="error-message" id="costRangeError"></p>
 <label for="monthlyCostMin">月最低電気代金 (円):</label>
-<input id="monthlyCostMin" max="999999" min="0" placeholder="例: 9000" required="" style="; background-color: white; color: #666666;" type="number"/>
+<input id="monthlyCostMin" name="monthlyCostMin" max="999999" min="0" placeholder="例: 9000" style="; background-color: white; color: #666666;" type="number"/>
 </div>
 </div>
 <div class="input-row">
